@@ -110,12 +110,10 @@ export const achievements: Achievement[] = [
   { place: 'PARTICIPANT', title: 'H Ward Science Exhibition', year: '2023' },
 ]
 
-// No resume PDF is wired into the app yet. When one exists, put it in
-// `public/` and set `resumeFile` to e.g. '/hrishita-patro-resume.pdf'.
-// Do NOT fabricate a link before the real file exists.
 export const resume = {
-  file: null as string | null,
+  file: '/Hrishita_Patro_Resume.pdf' as string | null,
 }
+
 
 export type ContactChannel = { label: string; value: string; href: string | null }
 

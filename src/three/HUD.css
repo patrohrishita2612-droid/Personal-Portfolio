@@ -75,16 +75,31 @@
 }
 
 /* Visibility rules for Desktop vs Mobile Touch */
-.mobile-only {
-  display: none;
+.desktop-only {
+  display: block;
 }
 
-@media (max-width: 860px), (pointer: coarse) {
+.mobile-only {
+  display: flex;
+}
+
+@media (min-width: 861px) {
+  .mobile-only {
+    display: none !important;
+  }
   .desktop-only {
-    display: none;
+    display: block !important;
+  }
+}
+
+@media (max-width: 860px) and (pointer: coarse),
+       (max-width: 860px) and (hover: none),
+       (max-height: 500px) and (pointer: coarse) {
+  .desktop-only {
+    display: none !important;
   }
   .mobile-only {
-    display: flex;
+    display: flex !important;
   }
 }
 
