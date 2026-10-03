@@ -122,6 +122,6 @@ export type ContactChannel = { label: string; value: string; href: string | null
 export const contactChannels: ContactChannel[] = [
   { label: 'EMAIL', value: 'patrohrishita2612@gmail.com', href: 'mailto:patrohrishita2612@gmail.com' },
   { label: 'MOBILE', value: '7977350002', href: 'tel:7977350002' },
-  { label: 'LINKEDIN', value: 'linkedin.com/in/HrishitaPatro', href: 'https://linkedin.com/in/HrishitaPatro' },
-  { label: 'GITHUB', value: 'github.com/patrohrishita2612-droid', href: 'https://github.com/patrohrishita2612-droid' },
+  { label: 'LINKEDIN', value: 'https://linkedin.com/in/HrishitaPatro', href: 'https://linkedin.com/in/HrishitaPatro' },
+  { label: 'GITHUB', value: 'https://github.com/patrohrishita2612-droid', href: 'https://github.com/patrohrishita2612-droid' },
 ]

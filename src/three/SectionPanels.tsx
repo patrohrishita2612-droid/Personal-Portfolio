@@ -260,7 +260,8 @@ function ContactBody({ index }: BodyProps) {
                 className="channel-link"
                 href={channel.href}
                 target={channel.href.startsWith('mailto:') || channel.href.startsWith('tel:') ? undefined : '_blank'}
-                rel={channel.href.startsWith('mailto:') || channel.href.startsWith('tel:') ? undefined : 'noreferrer'}
+                rel={channel.href.startsWith('mailto:') || channel.href.startsWith('tel:') ? undefined : 'noopener noreferrer'}
+                onClick={(e) => e.stopPropagation()}
               >
                 OPEN CHANNEL
               </a>
