@@ -259,8 +259,8 @@ function ContactBody({ index }: BodyProps) {
               <a
                 className="channel-link"
                 href={channel.href}
-                target={channel.href.startsWith('mailto:') ? undefined : '_blank'}
-                rel={channel.href.startsWith('mailto:') ? undefined : 'noreferrer'}
+                target={channel.href.startsWith('mailto:') || channel.href.startsWith('tel:') ? undefined : '_blank'}
+                rel={channel.href.startsWith('mailto:') || channel.href.startsWith('tel:') ? undefined : 'noreferrer'}
               >
                 OPEN CHANNEL
               </a>
