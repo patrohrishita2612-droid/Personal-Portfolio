@@ -1,0 +1,72 @@
+/*
+  FLIGHT CONTROLS — compact game-console widget.
+  Same language as the mission panel: dark navy + cyan structure + orange accents.
+*/
+
+.hud {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hud-panel {
+  min-width: 172px;
+  padding: 10px 14px 12px;
+  background: rgba(11, 18, 48, 0.92);
+  border: 2px solid rgba(70, 224, 232, 0.55);
+  border-left: 4px solid #ff8b3d;
+  border-radius: 10px 10px 10px 3px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #cfe3ff;
+}
+
+.hud-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  color: #46e0e8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+}
+
+.hud-dot {
+  width: 5px;
+  height: 5px;
+  background: #ff8b3d;
+  border-radius: 50%;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.hud-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 21px;
+  padding: 0 7px;
+  color: #46e0e8;
+  background: #12225c;
+  border: 1.5px solid #46e0e8;
+  border-radius: 4px 4px 8px 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.hud-label {
+  color: #93a9d0;
+  font-size: 10px;
+  letter-spacing: 0.7px;
+}
