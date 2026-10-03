@@ -81,3 +81,13 @@ export function useControls(): ControlsRef {
 
   return controls
 }
+
+export function setControlState(
+  controls: ControlsRef,
+  action: keyof ControlState,
+  active: boolean,
+) {
+  if (controls.current) {
+    controls.current[action] = active
+  }
+}

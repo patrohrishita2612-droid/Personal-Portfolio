@@ -617,11 +617,11 @@
 @media (max-width: 520px) {
   .destination-panel-overlay {
     align-items: flex-start;
-    padding: 12px;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }
 
   .destination-panel {
-    max-height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     border-radius: 12px 12px 12px 3px;
     box-shadow: 0 12px 40px rgba(2, 5, 18, 0.7);
   }

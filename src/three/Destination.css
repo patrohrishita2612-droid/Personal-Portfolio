@@ -63,7 +63,7 @@
   opacity: 0.95;
 }
 
-/* Proximity Prompt Badge: "PRESS ENTER TO EXPLORE" */
+/* Proximity Prompt Badge: "PRESS ENTER / TAP TO EXPLORE" */
 .destination-prompt {
   display: inline-flex;
   align-items: center;
@@ -87,8 +87,16 @@
     0 4px 18px rgba(0, 0, 0, 0.5),
     0 0 14px rgba(99, 102, 241, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
   animation: prompt-pulse 2s ease-in-out infinite alternate;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.destination-prompt:active {
+  transform: scale(0.96);
+  border-color: #ff8b3d;
 }
 
 .destination-prompt .prompt-icon {
@@ -104,5 +112,22 @@
   to {
     border-color: rgba(125, 211, 252, 0.75);
     box-shadow: 0 4px 22px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.4);
+  }
+}
+
+/* Mobile responsive scaling for floating labels */
+@media (max-width: 768px) {
+  .destination-label-name {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .destination-label-sub {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+  .destination-prompt {
+    font-size: 10px;
+    padding: 6px 12px;
+    letter-spacing: 1px;
   }
 }

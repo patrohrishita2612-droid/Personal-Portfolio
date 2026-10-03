@@ -22,6 +22,7 @@ type Props = {
   /** Projects keeps its original three-light rig; others use key + rim */
   fullLights?: boolean
   spacecraftRef: MutableRefObject<THREE.Group | null>
+  onExplore?: () => void
 }
 
 export const INTERACTION_DISTANCE = 35
@@ -50,6 +51,7 @@ export default function Destination({
   type = 'planet',
   fullLights = false,
   spacecraftRef,
+  onExplore,
 }: Props) {
   const { camera } = useThree()
   const planetRef = useRef<THREE.Group>(null)
@@ -333,9 +335,14 @@ export default function Destination({
       {/* Proximity prompt */}
       {nearby && labelMode !== 'off' && (
         <Html position={[0, 11.5, 0]} center distanceFactor={34} occlude={false} zIndexRange={[11, 0]}>
-          <div className="destination-prompt">
+          <div
+            className="destination-prompt"
+            onClick={() => onExplore?.()}
+            role="button"
+            tabIndex={0}
+          >
             <span className="prompt-icon">➜</span>
-            <span>PRESS ENTER TO EXPLORE</span>
+            <span>PRESS ENTER / TAP TO EXPLORE</span>
           </div>
         </Html>
       )}

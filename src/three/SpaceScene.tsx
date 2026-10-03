@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { Suspense, useMemo, useRef, useState, useEffect } from 'react'
+import { Suspense, useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import * as THREE from 'three'
 import Starfield from './Starfield'
 import Nebulae from './Nebulae'
@@ -10,6 +10,7 @@ import Spacecraft from './Spacecraft'
 import CameraRig from './CameraRig'
 import Destination from './Destination'
 import DestinationPanel from './DestinationPanel'
+import HUD from './HUD'
 import { useControls } from './useControls'
 import { destinations, destinationIds } from './destinations'
 import { INTERACTION_DISTANCE } from './Destination'
@@ -29,6 +30,25 @@ export default function SpaceScene() {
     setActivePanel(null)
     window.history.replaceState(null, '', window.location.pathname + window.location.search)
   }
+
+  const handleExplore = useCallback(() => {
+    const ship = spacecraftRef.current
+    let nearestId: string | null = null
+    let nearestDistSq = INTERACTION_DISTANCE * INTERACTION_DISTANCE
+    if (ship) {
+      for (const dest of destinations) {
+        const dx = ship.position.x - dest.position[0]
+        const dy = ship.position.y - dest.position[1]
+        const dz = ship.position.z - dest.position[2]
+        const distSq = dx * dx + dy * dy + dz * dz
+        if (distSq <= nearestDistSq) {
+          nearestDistSq = distSq
+          nearestId = dest.id
+        }
+      }
+    }
+    openPanel(nearestId ?? 'projects')
+  }, [])
 
   // Hash routing: #dest=<id> opens a destination directly (deep links + back/forward)
   useEffect(() => {
@@ -65,31 +85,14 @@ export default function SpaceScene() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Enter') {
-        // Open the destination we're parked next to; otherwise fall back to
-        // Projects (Mission Select), exactly like the original behaviour
-        const ship = spacecraftRef.current
-        let nearestId: string | null = null
-        let nearestDistSq = INTERACTION_DISTANCE * INTERACTION_DISTANCE
-        if (ship) {
-          for (const dest of destinations) {
-            const dx = ship.position.x - dest.position[0]
-            const dy = ship.position.y - dest.position[1]
-            const dz = ship.position.z - dest.position[2]
-            const distSq = dx * dx + dy * dy + dz * dz
-            if (distSq <= nearestDistSq) {
-              nearestDistSq = distSq
-              nearestId = dest.id
-            }
-          }
-        }
-        openPanel(nearestId ?? 'projects')
+        handleExplore()
       } else if (e.code === 'Escape') {
         closePanel()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
+  }, [handleExplore])
 
   return (
     <>
@@ -145,10 +148,12 @@ export default function SpaceScene() {
               moons={dest.moons}
               fullLights={dest.fullLights}
               spacecraftRef={spacecraftRef}
+              onExplore={() => openPanel(dest.id)}
             />
           ))}
         </Suspense>
       </Canvas>
+      <HUD controls={controls} onExplore={handleExplore} />
       {activePanel && (
         <DestinationPanel destinationId={activePanel} onClose={closePanel} />
       )}
