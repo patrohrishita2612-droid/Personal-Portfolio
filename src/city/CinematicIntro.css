@@ -1,0 +1,247 @@
+/* ==========================================================================
+   CinematicIntro.css - City Reveal & Introduction Overlay
+   ========================================================================== */
+
+.city-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at center, rgba(12, 19, 44, 0.88) 0%, rgba(6, 10, 24, 0.96) 100%);
+  opacity: 0;
+  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.city-intro-overlay.is-visible {
+  opacity: 1;
+}
+
+.city-intro-card {
+  position: relative;
+  max-width: 580px;
+  width: 100%;
+  padding: clamp(28px, 5vw, 40px);
+  background: rgba(10, 16, 38, 0.94);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 60px rgba(2, 6, 18, 0.85),
+    0 0 30px rgba(56, 189, 248, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: intro-pop 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes intro-pop {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.city-intro-beacon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 50%;
+}
+
+.city-intro-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(245, 158, 11, 0.6);
+  animation: pulse-ring 8s linear infinite;
+}
+
+@keyframes pulse-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.city-intro-skyline-icon {
+  font-size: 28px;
+}
+
+.city-intro-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.city-intro-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: #fbbf24;
+}
+
+.city-intro-name {
+  margin: 0;
+  font-family: 'Space Mono', 'Consolas', monospace;
+  font-size: clamp(26px, 5.5vw, 36px);
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #ffffff;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.city-intro-role {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: #38bdf8;
+}
+
+.city-intro-desc {
+  max-width: 460px;
+  margin: 0 0 24px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #cbd5e1;
+}
+
+.city-intro-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.city-intro-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 26px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  border: 1.5px solid #fef08a;
+  border-radius: 12px;
+  color: #0c152e;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.35);
+  transition: all 180ms ease;
+}
+
+.city-intro-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(234, 88, 12, 0.5);
+  filter: brightness(1.1);
+}
+
+.city-intro-arrow {
+  transition: transform 160ms ease;
+}
+
+.city-intro-btn-primary:hover .city-intro-arrow {
+  transform: translateX(4px);
+}
+
+.city-intro-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  background: rgba(18, 28, 62, 0.7);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.city-intro-btn-secondary:hover {
+  color: #ffffff;
+  border-color: #38bdf8;
+  background: rgba(30, 48, 102, 0.7);
+}
+
+.city-intro-quicklinks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.city-intro-quick-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #64748b;
+}
+
+.city-intro-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.city-intro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 16px;
+  color: #94a3b8;
+  font-family: 'Space Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.city-intro-pill:hover {
+  color: #ffffff;
+  border-color: #f59e0b;
+  background: rgba(30, 41, 74, 0.8);
+  transform: translateY(-1px);
+}
