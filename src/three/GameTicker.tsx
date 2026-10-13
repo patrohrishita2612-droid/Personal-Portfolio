@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { tickGame, getSnapshot } from './GameManager'
+import { tickGame } from './GameManager'
 import type { MutableRefObject } from 'react'
 
 // ---------------------------------------------------------------------------
@@ -22,8 +22,6 @@ export default function GameTicker({ spacecraftRef, shakeRef }: Props) {
   useFrame((_, delta) => {
     const ship = spacecraftRef.current
     if (!ship) return
-
-    const snap = getSnapshot()
 
     // Speed is tracked by GameManager via Spacecraft position delta
     const vel = ship.userData.velocityLength as number | undefined
@@ -49,7 +47,7 @@ export default function GameTicker({ spacecraftRef, shakeRef }: Props) {
       shakeTime.current = 0
     }
 
-    camera.position.addScaledVector(shakeOffset.current, snap.mode === 'game' ? 1 : 0)
+    camera.position.addScaledVector(shakeOffset.current, 1)
   })
 
   return null

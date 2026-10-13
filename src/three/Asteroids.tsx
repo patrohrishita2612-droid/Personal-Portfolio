@@ -1,170 +1,292 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { MutableRefObject } from 'react'
-import { onImpact, getSnapshot } from './GameManager'
-import type { GameMode } from './GameManager'
+import { onAsteroidImpact, getSnapshot, setThreatAlert } from './GameManager'
 
 // ---------------------------------------------------------------------------
-// Moving Asteroids — procedurally spawned, collision-detected, game-reactive
+// Threatening Asteroids System
+// Combines route hazard fields with dynamic interceptor asteroids that
+// fly across the player's path, triggering proximity warnings and collisions.
 // ---------------------------------------------------------------------------
 
-const ASTEROID_RADIUS = 2.8  // collision sphere radius per asteroid (world units, pre-scale)
-
-type AsteroidSpec = {
+type AsteroidData = {
   id: number
+  isInterceptor: boolean
   position: THREE.Vector3
   velocity: THREE.Vector3
   rotAxis: THREE.Vector3
   rotSpeed: number
   scale: number
+  radius: number
   color: string
 }
 
 type Props = {
   spacecraftRef: MutableRefObject<THREE.Group | null>
-  mode: GameMode
   onShake: () => void
 }
 
-// Scratch vectors (module-level to avoid per-frame allocations)
-const _tmp = new THREE.Vector3()
+const _shipPos = new THREE.Vector3()
+const _diff = new THREE.Vector3()
+const _fwd = new THREE.Vector3()
+const _toAsteroid = new THREE.Vector3()
 
-export default function Asteroids({ spacecraftRef, mode, onShake }: Props) {
-  const groupRef = useRef<THREE.Group>(null)
+export default function Asteroids({ spacecraftRef, onShake }: Props) {
   const meshRefs = useRef<(THREE.Mesh | null)[]>([])
-  const lastImpactTime = useRef(0)
+  const warningRingRef = useRef<THREE.Mesh>(null)
 
-  // Create geometry + material once — shared across all asteroid instances
+  // Cratered Asteroid Geometry
   const geo = useMemo(() => {
-    const g = new THREE.IcosahedronGeometry(1, 1)
+    const g = new THREE.IcosahedronGeometry(1, 2)
     const pos = g.getAttribute('position')
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
-      const n = (Math.sin(x * 4.3 + y * 3.1) + Math.cos(z * 3.7)) * 0.25
-      pos.setXYZ(i, x * (1 + n), y * (1 + n), z * (1 + n))
+      const noise =
+        Math.sin(x * 3.8 + y * 2.5) * 0.22 +
+        Math.cos(z * 3.4 + x * 1.8) * 0.18 +
+        Math.sin(y * 5.2 + z * 4.1) * 0.1
+      pos.setXYZ(i, x * (1 + noise), y * (1 + noise), z * (1 + noise))
     }
     g.computeVertexNormals()
     return g
   }, [])
 
-  // Deterministic asteroid specs seeded from index
-  const specs = useMemo<AsteroidSpec[]>(() => {
-    const out: AsteroidSpec[] = []
-    const colors = ['#4a5568', '#5a6585', '#3d4a5c', '#6b5c4a', '#4a3f5c', '#3a5048']
-    const rng = (seed: number) => {
-      const v = Math.sin(seed) * 43758.5453
-      return v - Math.floor(v)
-    }
-
-    for (let i = 0; i < 40; i++) {
-      const r = (s: number) => rng(i * 100 + s)
-      // Scatter around the play space, avoiding center (ship starts at 0,0,0)
-      const angle = r(1) * Math.PI * 2
-      const dist = 80 + r(2) * 350   // 80–430 units from origin
-      const height = (r(3) - 0.5) * 80
-
-      const vSpeed = (1 + r(7) * 2) * (i < 20 ? 1 : -1) * 0.5
-
-      out.push({
-        id: i,
-        position: new THREE.Vector3(
-          Math.cos(angle) * dist,
-          height,
-          Math.sin(angle) * dist,
-        ),
-        velocity: new THREE.Vector3(
-          (r(4) - 0.5) * 3,
-          (r(5) - 0.5) * 1.5,
-          (r(6) - 0.5) * 3 + vSpeed,
-        ),
-        rotAxis: new THREE.Vector3(r(8) - 0.5, r(9) - 0.5, r(10) - 0.5).normalize(),
-        rotSpeed: 0.3 + r(11) * 1.2,
-        scale: 1.2 + r(12) * 2.8,
-        color: colors[Math.floor(r(13) * colors.length)],
-      })
-    }
-    return out
+  // Materials with varied surface rock tones
+  const materials = useMemo(() => {
+    const tones = ['#4a453f', '#5e5850', '#3b424d', '#6e5a4b', '#483c4f', '#524e46']
+    return tones.map(
+      (c) =>
+        new THREE.MeshStandardMaterial({
+          color: new THREE.Color(c),
+          roughness: 0.9,
+          metalness: 0.15,
+          flatShading: true,
+        }),
+    )
   }, [])
 
-  // Difficulty scaling — more and faster asteroids
-  const getActiveCount = (diff: number) => Math.min(specs.length, 8 + diff * 5)
+  // Create Route Asteroids + Dynamic Interceptors
+  const asteroids = useMemo<AsteroidData[]>(() => {
+    const list: AsteroidData[] = []
+    let idCounter = 0
 
-  useFrame((state, delta) => {
-    if (mode !== 'game') return
+    // 1. Dynamic Interceptor Asteroids (8 asteroids that recycle in front of the player)
+    for (let i = 0; i < 8; i++) {
+      list.push({
+        id: idCounter++,
+        isInterceptor: true,
+        position: new THREE.Vector3(0, -9999, 0), // initialized offscreen, spawned in useFrame
+        velocity: new THREE.Vector3(),
+        rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        rotSpeed: 0.8 + Math.random() * 1.5,
+        scale: 2.4 + Math.random() * 3.2,
+        radius: 2.2,
+        color: '#6e5a4b',
+      })
+    }
+
+    // 2. Route Corridor Asteroids (32 asteroids placed along the planetary corridors)
+    // Corridors connect Base, Projects, About, Skills, Education, Experience, Achievements, Contact
+    const corridors = [
+      { from: [-110, 10, -65], to: [0, 0, 55], count: 6 },     // Base -> Projects
+      { from: [0, 0, 55], to: [180, -8, 115], count: 6 },      // Projects -> About
+      { from: [180, -8, 115], to: [215, 22, 385], count: 6 },  // About -> Education
+      { from: [-165, 13, 135], to: [-250, 16, 290], count: 5 },// Resume -> Skills
+      { from: [-250, 16, 290], to: [-200, -13, 475], count: 5 },// Skills -> Experience
+      { from: [215, 22, 385], to: [270, 11, 275], count: 4 },  // Education -> Achievements
+    ]
+
+    for (const c of corridors) {
+      for (let j = 0; j < c.count; j++) {
+        const t = (j + 0.5) / c.count
+        const px = c.from[0] + (c.to[0] - c.from[0]) * t + (Math.random() - 0.5) * 45
+        const py = c.from[1] + (c.to[1] - c.from[1]) * t + (Math.random() - 0.5) * 30
+        const pz = c.from[2] + (c.to[2] - c.from[2]) * t + (Math.random() - 0.5) * 45
+
+        const scale = 2.2 + Math.random() * 4.5
+        list.push({
+          id: idCounter++,
+          isInterceptor: false,
+          position: new THREE.Vector3(px, py, pz),
+          velocity: new THREE.Vector3(
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 4,
+          ),
+          rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+          rotSpeed: 0.3 + Math.random() * 0.9,
+          scale,
+          radius: scale * 0.85,
+          color: '#5e5850',
+        })
+      }
+    }
+
+    return list
+  }, [])
+
+  // Spawns/recycles an interceptor asteroid in front of the player's path
+  const spawnInterceptor = (ast: AsteroidData, ship: THREE.Group, speedMult: number) => {
+    _shipPos.copy(ship.position)
+    _fwd.set(0, 0, 1).applyQuaternion(ship.quaternion)
+
+    // Spawn 80 to 140 units ahead with random horizontal/vertical spread
+    const forwardDist = 85 + Math.random() * 55
+    const spreadX = (Math.random() - 0.5) * 48
+    const spreadY = (Math.random() - 0.5) * 24
+
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(ship.quaternion)
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(ship.quaternion)
+
+    ast.position
+      .copy(_shipPos)
+      .addScaledVector(_fwd, forwardDist)
+      .addScaledVector(right, spreadX)
+      .addScaledVector(up, spreadY)
+
+    // Aim toward where the player currently is or slightly ahead to create near-miss/collision
+    const target = _shipPos.clone().addScaledVector(_fwd, (Math.random() - 0.3) * 20)
+    const dirToPlayer = target.sub(ast.position).normalize()
+
+    const speed = (28 + Math.random() * 18) * speedMult
+    ast.velocity.copy(dirToPlayer).multiplyScalar(speed)
+    ast.scale = 2.6 + Math.random() * 3.8
+    ast.radius = ast.scale * 0.85
+  }
+
+  // Pre-seed initial interceptors when ship is ready
+  useEffect(() => {
+    const ship = spacecraftRef.current
+    if (ship) {
+      asteroids.filter((a) => a.isInterceptor).forEach((a) => spawnInterceptor(a, ship, 1.0))
+    }
+  }, [asteroids, spacecraftRef])
+
+  useFrame((_, delta) => {
     const dt = Math.min(delta, 0.08)
-    const t = state.clock.elapsedTime
     const snap = getSnapshot()
     if (snap.paused) return
 
     const ship = spacecraftRef.current
-    const activeCount = getActiveCount(snap.difficulty)
-    const speedScale = 0.8 + snap.difficulty * 0.25
+    if (!ship) return
 
-    for (let i = 0; i < activeCount; i++) {
-      const spec = specs[i]
+    _shipPos.copy(ship.position)
+    _fwd.set(0, 0, 1).applyQuaternion(ship.quaternion)
+
+    const isHazardActive = snap.mode === 'active' && !snap.isCrashed
+    const speedMult = 0.8 + snap.difficulty * 0.25
+
+    let closestDist = 9999
+    let threatIdx: number | null = null
+
+    for (let i = 0; i < asteroids.length; i++) {
+      const ast = asteroids[i]
       const mesh = meshRefs.current[i]
       if (!mesh) continue
 
-      // Move asteroid
-      spec.position.addScaledVector(spec.velocity, dt * speedScale)
-      mesh.position.copy(spec.position)
+      if (isHazardActive) {
+        // Move asteroid
+        ast.position.addScaledVector(ast.velocity, dt * speedMult)
+        mesh.rotateOnWorldAxis(ast.rotAxis, ast.rotSpeed * dt)
 
-      // Rotate
-      mesh.rotateOnWorldAxis(spec.rotAxis, spec.rotSpeed * dt)
+        // Interceptor recycle logic: if it passed behind ship by > 35 units or flew too far
+        if (ast.isInterceptor) {
+          _diff.copy(ast.position).sub(_shipPos)
+          const forwardDot = _diff.dot(_fwd)
 
-      // Wrap position if too far from origin (keeps asteroids in the play area)
-      if (spec.position.length() > 500) {
-        const angle = t * 0.03 + i * 0.5
-        const dist = 120 + (i % 5) * 60
-        spec.position.set(
-          Math.cos(angle) * dist + (Math.random() - 0.5) * 30,
-          (Math.random() - 0.5) * 60,
-          Math.sin(angle) * dist + (Math.random() - 0.5) * 30,
-        )
-        spec.velocity.set(
-          (Math.random() - 0.5) * 3,
-          (Math.random() - 0.5) * 1.5,
-          (Math.random() - 0.5) * 3,
-        )
-      }
+          if (forwardDot < -30 || _diff.length() > 240) {
+            spawnInterceptor(ast, ship, speedMult)
+          }
+        } else {
+          // Corridor asteroids drift and stay within sector
+          if (ast.position.length() > 600) {
+            ast.velocity.negate()
+          }
+        }
 
-      // Collision detection
-      if (ship && !snap.invulnerable) {
-        _tmp.copy(ship.position).sub(spec.position)
-        const dist = _tmp.length()
-        const collisionDist = ASTEROID_RADIUS * spec.scale * 0.55 + 3.0 // 3.0 = ship half-size
-        if (dist < collisionDist && t - lastImpactTime.current > 0.5) {
-          lastImpactTime.current = t
-          onImpact()
-          onShake()
-          // Push ship away slightly
-          ship.position.addScaledVector(_tmp.normalize(), 4)
+        // Threat Proximity & Warning Calculation
+        _diff.copy(ast.position).sub(_shipPos)
+        const dist = _diff.length()
+        const isApproaching = ast.velocity.dot(_diff) < 0 // velocity vector points toward ship
+
+        if (dist < 65 && isApproaching && dist < closestDist) {
+          closestDist = dist
+          threatIdx = i
+        }
+
+        // Collision Detection
+        const hitDistance = ast.radius + 2.8 // 2.8 = spacecraft collision radius
+        if (dist < hitDistance) {
+          // Collision occurred!
+          if (!snap.isInvulnerable) {
+            onAsteroidImpact(25)
+            onShake()
+
+            // Knockback impulse: push ship away from asteroid center
+            _toAsteroid.copy(_shipPos).sub(ast.position).normalize()
+            ship.position.addScaledVector(_toAsteroid, 5.0)
+
+            // Deflect asteroid
+            ast.velocity.reflect(_toAsteroid)
+          }
         }
       }
+
+      mesh.position.copy(ast.position)
+      mesh.scale.setScalar(ast.scale)
+      mesh.visible = isHazardActive
+    }
+
+    // Update Threat Alert
+    if (threatIdx !== null && isHazardActive) {
+      setThreatAlert({
+        active: true,
+        distance: Math.round(closestDist),
+        direction: closestDist < 30 ? 'CRITICAL IMMINENT' : 'INCOMING AHEAD',
+      })
+
+      // Position 3D warning ring around the dangerous asteroid
+      const threatMesh = meshRefs.current[threatIdx]
+      if (warningRingRef.current && threatMesh) {
+        warningRingRef.current.position.copy(threatMesh.position)
+        warningRingRef.current.scale.setScalar(threatMesh.scale.x * 1.5)
+        warningRingRef.current.visible = true
+      }
+    } else {
+      if (snap.threatAlert.active) {
+        setThreatAlert({ active: false, distance: 0, direction: 'CLEAR' })
+      }
+      if (warningRingRef.current) warningRingRef.current.visible = false
     }
   })
 
   return (
-    <group ref={groupRef}>
-      {specs.map((spec, i) => (
+    <group>
+      {asteroids.map((ast, i) => (
         <mesh
-          key={spec.id}
-          ref={(el) => { meshRefs.current[i] = el }}
-          position={spec.position}
-          scale={spec.scale}
-          visible={mode === 'game'}
+          key={ast.id}
+          ref={(el) => {
+            meshRefs.current[i] = el
+          }}
+          geometry={geo}
+          material={materials[i % materials.length]}
           castShadow
-        >
-          <primitive object={geo} attach="geometry" />
-          <meshStandardMaterial
-            color={spec.color}
-            roughness={0.88}
-            metalness={0.12}
-            flatShading
-          />
-        </mesh>
+          receiveShadow
+        />
       ))}
+
+      {/* 3D Pulsing Red Threat Reticle around incoming threat */}
+      <mesh ref={warningRingRef} visible={false}>
+        <ringGeometry args={[1.1, 1.35, 24]} />
+        <meshBasicMaterial
+          color="#ff3344"
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.8}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
     </group>
   )
 }

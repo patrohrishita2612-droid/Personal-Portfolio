@@ -10,13 +10,13 @@
 .destination-panel-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(4, 8, 26, 0.55);
-  pointer-events: none;
+  background: rgba(4, 8, 26, 0.65);
+  pointer-events: auto;
 }
 
 .destination-panel {

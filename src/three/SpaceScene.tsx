@@ -13,30 +13,31 @@ import DestinationPanel from './DestinationPanel'
 import HUD from './HUD'
 import Asteroids from './Asteroids'
 import Collectibles from './Collectibles'
+import ShootingStars from './ShootingStars'
 import GameHUD from './GameHUD'
 import GameTicker from './GameTicker'
 import { useControls } from './useControls'
 import { destinations, destinationIds } from './destinations'
 import { INTERACTION_DISTANCE } from './Destination'
-import { getSnapshot, setMode, togglePause } from './GameManager'
-import type { GameMode } from './GameManager'
+import { getSnapshot, setPaused, togglePause, respawnShip } from './GameManager'
 
 export default function SpaceScene() {
   const controls = useControls()
   const spacecraftRef = useRef<THREE.Group>(null)
-  const shakeRef = useRef(0)          // impact shake intensity
+  const shakeRef = useRef(0) // impact shake intensity
   const [activePanel, setActivePanel] = useState<string | null>(null)
-  const [gameMode, setGameMode] = useState<GameMode>('explore')
 
-  const openPanel = (id: string) => {
+  const openPanel = useCallback((id: string) => {
     setActivePanel(id)
+    setPaused(true) // pause game hazards while reading portfolio
     window.history.replaceState(null, '', `#dest=${id}`)
-  }
+  }, [])
 
-  const closePanel = () => {
+  const closePanel = useCallback(() => {
     setActivePanel(null)
+    setPaused(false) // resume game hazards
     window.history.replaceState(null, '', window.location.pathname + window.location.search)
-  }
+  }, [])
 
   const handleExplore = useCallback(() => {
     const ship = spacecraftRef.current
@@ -55,14 +56,20 @@ export default function SpaceScene() {
       }
     }
     openPanel(nearestId ?? 'projects')
-  }, [])
+  }, [openPanel])
 
   // Hash routing
   useEffect(() => {
     const readHash = () => {
       const match = /#dest=([\w-]+)/.exec(window.location.hash)
       const id = match?.[1]
-      setActivePanel(id && destinationIds.has(id) ? id : null)
+      if (id && destinationIds.has(id)) {
+        setActivePanel(id)
+        setPaused(true)
+      } else {
+        setActivePanel(null)
+        setPaused(false)
+      }
     }
     readHash()
     window.addEventListener('hashchange', readHash)
@@ -73,25 +80,26 @@ export default function SpaceScene() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Enter') {
-        handleExplore()
-      } else if (e.code === 'Escape') {
-        closePanel()
-      } else if (e.code === 'KeyP') {
         const snap = getSnapshot()
-        if (snap.mode === 'game') togglePause()
+        if (snap.isCrashed) {
+          respawnShip()
+        } else if (!activePanel) {
+          handleExplore()
+        }
+      } else if (e.code === 'Escape') {
+        if (activePanel) {
+          closePanel()
+        }
+      } else if (e.code === 'KeyP') {
+        if (!activePanel) togglePause()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [handleExplore])
-
-  const handleModeChange = useCallback((m: GameMode) => {
-    setGameMode(m)
-    setMode(m)
-  }, [])
+  }, [activePanel, closePanel, handleExplore])
 
   const handleShake = useCallback(() => {
-    shakeRef.current = 1.2
+    shakeRef.current = 1.4
   }, [])
 
   // Painted gradient sky
@@ -130,31 +138,30 @@ export default function SpaceScene() {
           </mesh>
         )}
 
-        <ambientLight intensity={0.3} color="#5f74c4" />
-        <directionalLight position={[15, 20, 8]} intensity={1.0} color="#d8e6ff" />
-        <directionalLight position={[-20, 5, -15]} intensity={0.55} color="#ffb287" />
-        <pointLight position={[0, -15, 5]} intensity={0.35} color="#ff77b3" distance={50} />
+        <ambientLight intensity={0.35} color="#5f74c4" />
+        <directionalLight position={[15, 20, 8]} intensity={1.1} color="#d8e6ff" />
+        <directionalLight position={[-20, 5, -15]} intensity={0.6} color="#ffb287" />
+        <pointLight position={[0, -15, 5]} intensity={0.4} color="#ff77b3" distance={50} />
 
         <Suspense fallback={null}>
           <Starfield />
           <Nebulae />
           <Galaxy />
           <Galaxy position={[240, -85, -820]} rotation={[-1.05, 0.2, -0.35]} scale={0.72} />
+          <ShootingStars />
           <Scenery />
           <SpaceObjects />
           <Spacecraft controls={controls} groupRef={spacecraftRef} />
           <CameraRig controls={controls} target={spacecraftRef} />
           <GameTicker spacecraftRef={spacecraftRef} shakeRef={shakeRef} />
 
-          {/* Game mode elements */}
+          {/* Active survival game systems */}
           <Asteroids
             spacecraftRef={spacecraftRef}
-            mode={gameMode}
             onShake={handleShake}
           />
           <Collectibles
             spacecraftRef={spacecraftRef}
-            mode={gameMode}
           />
 
           {destinations.map((dest) => (
@@ -176,9 +183,9 @@ export default function SpaceScene() {
         </Suspense>
       </Canvas>
 
-      {/* DOM overlays */}
+      {/* Unified HUD & Portfolio Modals */}
       <HUD controls={controls} onExplore={handleExplore} />
-      <GameHUD onModeChange={handleModeChange} />
+      <GameHUD isPanelOpen={Boolean(activePanel)} />
       {activePanel && (
         <DestinationPanel destinationId={activePanel} onClose={closePanel} />
       )}

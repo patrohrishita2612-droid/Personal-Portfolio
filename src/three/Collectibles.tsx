@@ -2,18 +2,18 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { MutableRefObject } from 'react'
-import { onCollect, getSnapshot } from './GameManager'
-import type { GameMode } from './GameManager'
+import { onCollectOrb, onCollectShieldKit, getSnapshot } from './GameManager'
 
 // ---------------------------------------------------------------------------
-// Collectible energy orbs — glowing, pulsing, floating in space
+// Collectibles System — Energy Orbs & Shield Repair Kits
+// Placed along flight paths and around planets for rewarding exploration.
 // ---------------------------------------------------------------------------
 
-const COLLECT_DISTANCE = 8   // units from ship center to collect
-const ORB_COUNT = 18
+type PickupType = 'orb' | 'shield'
 
-type OrbSpec = {
+type PickupSpec = {
   id: number
+  type: PickupType
   basePos: THREE.Vector3
   collected: boolean
   respawnTimer: number
@@ -21,45 +21,120 @@ type OrbSpec = {
 
 type Props = {
   spacecraftRef: MutableRefObject<THREE.Group | null>
-  mode: GameMode
 }
 
+const COLLECT_DIST = 9.5
 const _tmp = new THREE.Vector3()
 
-export default function Collectibles({ spacecraftRef, mode }: Props) {
+export default function Collectibles({ spacecraftRef }: Props) {
   const meshRefs = useRef<(THREE.Mesh | null)[]>([])
-  const glowRefs = useRef<(THREE.Mesh | null)[]>([])
+  const ringRefs = useRef<(THREE.Mesh | null)[]>([])
 
-  const specs = useMemo<OrbSpec[]>(() => {
-    const rng = (seed: number) => {
-      const v = Math.sin(seed * 127.1 + 311.7) * 43758.5453
-      return v - Math.floor(v)
-    }
-    const out: OrbSpec[] = []
-    for (let i = 0; i < ORB_COUNT; i++) {
-      const angle = rng(i * 3) * Math.PI * 2
-      const dist = 40 + rng(i * 3 + 1) * 420
-      const height = (rng(i * 3 + 2) - 0.5) * 70
-      out.push({
-        id: i,
-        basePos: new THREE.Vector3(
-          Math.cos(angle) * dist,
-          height,
-          Math.sin(angle) * dist,
-        ),
+  // Seeded pickups around planets & travel routes
+  const specs = useMemo<PickupSpec[]>(() => {
+    const list: PickupSpec[] = []
+    let idCounter = 0
+
+    // Coordinates near key planet corridors
+    const locations: [number, number, number, PickupType][] = [
+      // Corridor Base -> Projects
+      [-55, 6, -5, 'orb'],
+      [-25, 2, 25, 'shield'],
+      // Corridor Projects -> About
+      [60, -3, 75, 'orb'],
+      [120, -5, 95, 'shield'],
+      // Corridor About -> Education
+      [195, 8, 230, 'orb'],
+      [205, 15, 310, 'shield'],
+      // Corridor Base -> Resume
+      [-135, 11, 35, 'orb'],
+      // Corridor Resume -> Skills
+      [-205, 14, 210, 'orb'],
+      [-230, 15, 255, 'shield'],
+      // Near Skills
+      [-240, 20, 320, 'orb'],
+      // Corridor Skills -> Experience
+      [-225, 2, 380, 'orb'],
+      [-210, -6, 430, 'shield'],
+      // Near Achievements
+      [240, 12, 330, 'orb'],
+      [260, 10, 230, 'shield'],
+      // Near Contact
+      [140, -6, -40, 'orb'],
+      [155, -7, -80, 'shield'],
+      // Free-floating discoveries
+      [0, 15, 140, 'orb'],
+      [70, 25, 180, 'orb'],
+      [-90, -10, 210, 'shield'],
+      [30, -15, 290, 'orb'],
+    ]
+
+    for (const [x, y, z, type] of locations) {
+      list.push({
+        id: idCounter++,
+        type,
+        basePos: new THREE.Vector3(x, y, z),
         collected: false,
         respawnTimer: 0,
       })
     }
-    return out
+
+    return list
   }, [])
 
-  // Shared geometries
-  const coreGeo = useMemo(() => new THREE.SphereGeometry(1.2, 12, 12), [])
-  const glowGeo = useMemo(() => new THREE.SphereGeometry(2.5, 12, 12), [])
+  // Geometries
+  const orbGeo = useMemo(() => new THREE.OctahedronGeometry(1.4, 0), [])
+  const shieldGeo = useMemo(() => new THREE.DodecahedronGeometry(1.5, 0), [])
+  const ringGeo = useMemo(() => new THREE.TorusGeometry(2.2, 0.1, 8, 24), [])
+
+  // Materials
+  const orbMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#00ddff',
+        emissive: '#0099ff',
+        emissiveIntensity: 1.8,
+        metalness: 0.2,
+        roughness: 0.1,
+      }),
+    [],
+  )
+
+  const shieldMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#10b981',
+        emissive: '#059669',
+        emissiveIntensity: 1.8,
+        metalness: 0.2,
+        roughness: 0.1,
+      }),
+    [],
+  )
+
+  const orbRingMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#38bdf8',
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+      }),
+    [],
+  )
+
+  const shieldRingMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#34d399',
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+      }),
+    [],
+  )
 
   useFrame((state, delta) => {
-    if (mode !== 'game') return
     const dt = Math.min(delta, 0.08)
     const t = state.clock.elapsedTime
     const snap = getSnapshot()
@@ -70,55 +145,48 @@ export default function Collectibles({ spacecraftRef, mode }: Props) {
     for (let i = 0; i < specs.length; i++) {
       const spec = specs[i]
       const mesh = meshRefs.current[i]
-      const glow = glowRefs.current[i]
+      const ring = ringRefs.current[i]
 
-      // Respawn countdown
+      // Respawn timer
       if (spec.collected) {
         spec.respawnTimer -= dt
         if (spec.respawnTimer <= 0) {
           spec.collected = false
-          // Teleport to a new random nearby position
-          const angle = t * 0.5 + i * 0.4
-          const dist = 60 + (i % 6) * 50
-          spec.basePos.set(
-            Math.cos(angle) * dist + (Math.random() - 0.5) * 40,
-            (Math.random() - 0.5) * 60,
-            Math.sin(angle) * dist + (Math.random() - 0.5) * 40,
-          )
         }
         if (mesh) mesh.visible = false
-        if (glow) glow.visible = false
+        if (ring) ring.visible = false
         continue
       }
 
-      if (!mesh || !glow) continue
+      if (!mesh || !ring) continue
 
-      // Float and pulse animation
-      const floatY = spec.basePos.y + Math.sin(t * 1.4 + i * 0.9) * 2.5
-      const worldPos = _tmp.set(spec.basePos.x, floatY, spec.basePos.z)
+      // Bobbing floating animation
+      const floatY = spec.basePos.y + Math.sin(t * 2.2 + i * 0.7) * 1.5
+      _tmp.set(spec.basePos.x, floatY, spec.basePos.z)
 
-      mesh.position.copy(worldPos)
-      glow.position.copy(worldPos)
-      mesh.rotation.y = t * 0.8 + i
-      mesh.rotation.z = Math.sin(t * 0.5 + i) * 0.3
+      mesh.position.copy(_tmp)
+      ring.position.copy(_tmp)
+
+      mesh.rotation.y = t * 1.8 + i
+      mesh.rotation.x = Math.sin(t * 1.2 + i) * 0.4
+      ring.rotation.x = Math.PI / 2 + Math.sin(t * 1.5 + i) * 0.3
+      ring.rotation.z = t * 1.2 + i
+
       mesh.visible = true
+      ring.visible = true
 
-      // Pulse glow
-      const pulse = 0.5 + 0.5 * Math.sin(t * 3 + i * 1.2)
-      const glowMat = glow.material as THREE.MeshBasicMaterial
-      glowMat.opacity = 0.08 + pulse * 0.12
-      glow.visible = true
-      glow.scale.setScalar(0.9 + pulse * 0.25)
-
-      // Collection check
-      if (ship) {
-        const dist = ship.position.distanceTo(worldPos)
-        if (dist < COLLECT_DISTANCE) {
+      // Pickup Collision with Spaceship
+      if (ship && !snap.isCrashed) {
+        const dist = ship.position.distanceTo(_tmp)
+        if (dist < COLLECT_DIST) {
           spec.collected = true
-          spec.respawnTimer = 20 + Math.random() * 15  // respawn in 20–35s
-          mesh.visible = false
-          glow.visible = false
-          onCollect()
+          spec.respawnTimer = 22.0 // respawns in 22s
+
+          if (spec.type === 'orb') {
+            onCollectOrb()
+          } else {
+            onCollectShieldKit()
+          }
         }
       }
     }
@@ -128,29 +196,20 @@ export default function Collectibles({ spacecraftRef, mode }: Props) {
     <group>
       {specs.map((spec, i) => (
         <group key={spec.id}>
-          {/* Core orb */}
-          <mesh ref={(el) => { meshRefs.current[i] = el }} visible={false}>
-            <primitive object={coreGeo} attach="geometry" />
-            <meshStandardMaterial
-              color="#00eeff"
-              emissive="#00ccff"
-              emissiveIntensity={1.6}
-              metalness={0.1}
-              roughness={0.1}
-            />
-          </mesh>
-          {/* Outer glow shell */}
-          <mesh ref={(el) => { glowRefs.current[i] = el }} visible={false}>
-            <primitive object={glowGeo} attach="geometry" />
-            <meshBasicMaterial
-              color="#00ddff"
-              transparent
-              opacity={0.12}
-              side={THREE.BackSide}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-            />
-          </mesh>
+          <mesh
+            ref={(el) => {
+              meshRefs.current[i] = el
+            }}
+            geometry={spec.type === 'orb' ? orbGeo : shieldGeo}
+            material={spec.type === 'orb' ? orbMat : shieldMat}
+          />
+          <mesh
+            ref={(el) => {
+              ringRefs.current[i] = el
+            }}
+            geometry={ringGeo}
+            material={spec.type === 'orb' ? orbRingMat : shieldRingMat}
+          />
         </group>
       ))}
     </group>

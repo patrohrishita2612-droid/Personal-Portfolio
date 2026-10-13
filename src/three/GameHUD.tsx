@@ -1,138 +1,219 @@
 import { useState, useEffect, useCallback } from 'react'
-import { subscribe, getSnapshot, setMode, togglePause, restartGame } from './GameManager'
-import type { GameStateSnapshot, GameMode } from './GameManager'
+import {
+  subscribe,
+  getSnapshot,
+  setGameMode,
+  togglePause,
+  restartGame,
+  respawnShip,
+} from './GameManager'
+import type { GameStateSnapshot } from './GameManager'
 import './GameHUD.css'
 
 type Props = {
-  onModeChange?: (mode: GameMode) => void
+  isPanelOpen?: boolean
 }
 
-export default function GameHUD({ onModeChange }: Props) {
+export default function GameHUD({ isPanelOpen = false }: Props) {
   const [snap, setSnap] = useState<GameStateSnapshot>(getSnapshot)
 
   useEffect(() => {
     return subscribe((s) => setSnap(s))
   }, [])
 
-  const switchMode = useCallback((m: GameMode) => {
-    setMode(m)
-    onModeChange?.(m)
-  }, [onModeChange])
-
-  const handleRestart = useCallback(() => {
-    restartGame()
-  }, [])
-
-  const isGame = snap.mode === 'game'
+  const handleToggleMode = useCallback(() => {
+    const nextMode = snap.mode === 'active' ? 'cruise' : 'active'
+    setGameMode(nextMode)
+  }, [snap.mode])
 
   return (
-    <div className={`game-hud ${isGame ? 'game-hud--game' : 'game-hud--explore'}`}>
-      {/* Mode Toggle Bar */}
-      <div className="game-hud-modebar">
-        <button
-          className={`mode-btn ${snap.mode === 'explore' ? 'mode-btn--active' : ''}`}
-          onClick={() => switchMode('explore')}
-          title="Explore Mode: Navigate planets freely"
-        >
-          <span className="mode-icon">🔭</span>
-          <span>EXPLORE</span>
-        </button>
-        <div className="mode-divider" />
-        <button
-          className={`mode-btn ${snap.mode === 'game' ? 'mode-btn--active' : ''}`}
-          onClick={() => switchMode('game')}
-          title="Game Mode: Pilot your ship, dodge asteroids, collect energy"
-        >
-          <span className="mode-icon">🚀</span>
-          <span>GAME</span>
-        </button>
+    <div className={`unified-hud-root ${isPanelOpen ? 'hud-panel-open' : ''}`}>
+      {/* ── Impact Damage Screen Flash ── */}
+      {snap.damageFlash && !isPanelOpen && <div className="damage-flash-vignette" />}
+
+      {/* ── Floating Alerts (Damage / Pickups) ── */}
+      {!isPanelOpen && (
+        <div className="hud-floating-alerts">
+        {snap.damageNotice && (
+          <div className="hud-alert-banner alert-damage">
+            <span className="alert-icon">💥</span>
+            <span>{snap.damageNotice}</span>
+          </div>
+        )}
+        {snap.collectNotice && (
+          <div className="hud-alert-banner alert-pickup">
+            <span className="alert-icon">✨</span>
+            <span>{snap.collectNotice}</span>
+          </div>
+        )}
+        {snap.threatAlert.active && !snap.isCrashed && snap.mode === 'active' && (
+          <div className="hud-alert-banner alert-threat">
+            <span className="threat-pulse-dot" />
+            <span>⚠️ COLLISION ALERT: INCOMING ASTEROID ({snap.threatAlert.distance}m) — EVASIVE ACTION!</span>
+          </div>
+        )}
       </div>
+      )}
 
-      {/* Game Mode HUD (only shown in game mode) */}
-      {isGame && (
-        <div className="game-stats">
-          {/* Score */}
-          <div className="stat-block stat-score">
-            <span className="stat-label">SCORE</span>
-            <span className="stat-value">{snap.score.toLocaleString()}</span>
+      {/* ── Top Flight Status & Controls Bar ── */}
+      <header className="hud-topbar">
+        <div className="topbar-left">
+          <span className="ship-callsign">VESSEL: EXPLORER-1</span>
+          <span className="status-divider">/</span>
+          <span className={`status-pill ${snap.mode === 'active' ? 'status-pill--active' : 'status-pill--cruise'}`}>
+            {snap.mode === 'active' ? '⚡ HAZARDS ACTIVE' : '🛡️ SAFE CRUISE'}
+          </span>
+        </div>
+
+        <div className="topbar-center">
+          <div className="mission-ticker">
+            <span className="mission-label">MISSION:</span>
+            <span className="mission-text">{snap.objective}</span>
           </div>
+        </div>
 
-          {/* Distance */}
-          <div className="stat-block stat-dist">
-            <span className="stat-label">DISTANCE</span>
-            <span className="stat-value">{Math.floor(snap.distance)} <span className="stat-unit">AU</span></span>
-          </div>
+        <div className="topbar-right">
+          <button
+            type="button"
+            className="hud-mode-toggle"
+            onClick={handleToggleMode}
+            title={snap.mode === 'active' ? 'Switch to Safe Cruise (No hazards)' : 'Switch to Survival Mode'}
+          >
+            {snap.mode === 'active' ? 'MODE: SURVIVAL' : 'MODE: SAFE CRUISE'}
+          </button>
+          <button type="button" className="hud-btn-pause" onClick={togglePause} title="Pause / Resume (P)">
+            {snap.paused ? '▶' : '⏸'}
+          </button>
+        </div>
+      </header>
 
-          {/* Collectibles */}
-          <div className="stat-block stat-collect">
-            <span className="stat-label">ORBS</span>
-            <span className="stat-value">⚡ {snap.collectibles}</span>
-          </div>
-
-          {/* Difficulty */}
-          <div className="stat-block stat-diff">
-            <span className="stat-label">THREAT</span>
-            <div className="diff-pips">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={`diff-pip ${i < snap.difficulty ? 'diff-pip--active' : ''}`} />
-              ))}
+      {/* ── Cockpit Instruments Cluster (Right Side) ── */}
+      {!isPanelOpen && (
+        <aside className="hud-cockpit-panel" aria-label="Flight Telemetry">
+          {/* Score & Distance */}
+          <div className="instrument-card">
+            <div className="instrument-stat">
+              <span className="inst-label">SCORE</span>
+              <span className="inst-value inst-score">{snap.score.toLocaleString()}</span>
+            </div>
+            <div className="instrument-stat">
+              <span className="inst-label">DISTANCE</span>
+              <span className="inst-value">{Math.floor(snap.distance)} <span className="unit">AU</span></span>
             </div>
           </div>
 
-          {/* Objective */}
-          <div className="stat-objective">
-            <span className="stat-label">MISSION</span>
-            <span className="objective-text">{snap.objectives[0]}</span>
-          </div>
-
-          {/* Health bar */}
-          <div className="meter-row">
-            <span className="meter-label">🛡 SHIELD</span>
-            <div className="meter-bar">
+          {/* Shield Integrity Bar */}
+          <div className="instrument-meter">
+            <div className="meter-header">
+              <span className="meter-title">🛡️ HULL SHIELD</span>
+              <span className={`meter-value ${snap.shield < 30 ? 'text-critical' : ''}`}>{Math.round(snap.shield)}%</span>
+            </div>
+            <div className="meter-track">
               <div
-                className={`meter-fill meter-fill--health ${snap.health < 30 ? 'meter-fill--critical' : ''} ${snap.invulnerable ? 'meter-fill--invuln' : ''}`}
-                style={{ width: `${snap.health}%` }}
+                className={`meter-bar meter-bar--shield ${snap.shield < 30 ? 'bar-critical' : ''} ${snap.isInvulnerable ? 'bar-invuln' : ''}`}
+                style={{ width: `${snap.shield}%` }}
               />
             </div>
-            <span className="meter-pct">{Math.round(snap.health)}%</span>
           </div>
 
-          {/* Boost bar */}
-          <div className="meter-row">
-            <span className="meter-label">⚡ BOOST</span>
-            <div className="meter-bar">
+          {/* Thruster Boost Gauge */}
+          <div className="instrument-meter">
+            <div className="meter-header">
+              <span className="meter-title">⚡ THRUSTER BOOST</span>
+              <span className="meter-value">{Math.round(snap.boost)}%</span>
+            </div>
+            <div className="meter-track">
               <div
-                className="meter-fill meter-fill--boost"
+                className="meter-bar meter-bar--boost"
                 style={{ width: `${snap.boost}%` }}
               />
             </div>
-            <span className="meter-pct">{Math.round(snap.boost)}%</span>
           </div>
 
-          {/* Pause / Restart */}
-          <div className="game-actions">
-            <button className="game-action-btn" onClick={togglePause} title="Pause / Resume (P)">
-              {snap.paused ? '▶ RESUME' : '⏸ PAUSE'}
-            </button>
-            <button className="game-action-btn game-action-btn--restart" onClick={handleRestart} title="Restart game">
-              ↺ RESTART
-            </button>
+          {/* Inventory / Pickups */}
+          <div className="inventory-chips">
+            <span className="inv-chip" title="Energy Orbs Collected">
+              ⚡ {snap.collectibles} ORBS
+            </span>
+            <span className="inv-chip" title="Shield Kits Collected">
+              🛡️ {snap.shieldKits} KITS
+            </span>
+            {snap.mode === 'active' && (
+              <span className="inv-chip chip-threat" title="Current Threat Level">
+                LVL {snap.difficulty}
+              </span>
+            )}
           </div>
+        </aside>
+      )}
 
-          {/* Paused overlay */}
-          {snap.paused && (
-            <div className="pause-overlay">
-              <div className="pause-card">
-                <div className="pause-title">⏸ PAUSED</div>
-                <p className="pause-sub">Press P or tap RESUME to continue</p>
-                <div className="pause-actions">
-                  <button className="game-action-btn" onClick={togglePause}>▶ RESUME</button>
-                  <button className="game-action-btn game-action-btn--restart" onClick={handleRestart}>↺ RESTART</button>
-                  <button className="game-action-btn" onClick={() => switchMode('explore')}>🔭 EXPLORE MODE</button>
-                </div>
-              </div>
+      {/* ── Desktop Key Controls Guide (Bottom Center) ── */}
+      {!isPanelOpen && (
+        <div className="hud-controls-helper desktop-only">
+          <span className="key-chip">W / S</span> Thrust ·
+          <span className="key-chip">A / D</span> Steer ·
+          <span className="key-chip">SHIFT</span> Boost ·
+          <span className="key-chip">R / F</span> Ascend ·
+          <span className="key-chip">ENTER</span> Explore Planet
+        </div>
+      )}
+
+      {/* ── 🚨 Full-Screen SHIP DESTROYED Crash Modal ── */}
+      {snap.isCrashed && (
+        <div className="crash-modal-overlay">
+          <div className="crash-card">
+            <div className="crash-alert-icon">💥</div>
+            <h1 className="crash-title">SHIP DESTROYED</h1>
+            <p className="crash-subtitle">CRITICAL HULL FAILURE · CATASTROPHIC ASTEROID IMPACT</p>
+
+            <div className="countdown-box">
+              <span className="countdown-label">EMERGENCY RESPAWN TELEMETRY IN</span>
+              <span className="countdown-digit">{snap.crashCountdown}</span>
+              <span className="countdown-sec">SECONDS</span>
             </div>
-          )}
+
+            <div className="crash-actions">
+              <button
+                type="button"
+                className="crash-respawn-btn"
+                onClick={() => respawnShip()}
+              >
+                RESPAWN IMMEDIATELY
+              </button>
+              <button
+                type="button"
+                className="crash-restart-btn"
+                onClick={() => restartGame()}
+              >
+                RESTART MISSION
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ⏸ Pause Modal ── */}
+      {snap.paused && !snap.isCrashed && !isPanelOpen && (
+        <div className="pause-modal-overlay">
+          <div className="pause-dialog">
+            <h2>⏸ FLIGHT PAUSED</h2>
+            <p>Vessel systems in temporary orbital hold.</p>
+            <div className="pause-dialog-actions">
+              <button type="button" className="btn-resume" onClick={togglePause}>
+                ▶ RESUME FLIGHT
+              </button>
+              <button
+                type="button"
+                className="btn-mode-toggle"
+                onClick={handleToggleMode}
+              >
+                TOGGLE {snap.mode === 'active' ? 'SAFE CRUISE' : 'SURVIVAL HAZARDS'}
+              </button>
+              <button type="button" className="btn-restart" onClick={restartGame}>
+                ↺ RESTART GAME
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

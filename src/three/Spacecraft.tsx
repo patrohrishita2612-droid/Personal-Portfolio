@@ -1,9 +1,9 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import type { MutableRefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { ControlsRef } from './useControls'
-import { canBoost, getSnapshot } from './GameManager'
+import { canBoost, canFly, getSnapshot, registerRespawnHandler } from './GameManager'
 
 type Props = {
   controls: ControlsRef
@@ -165,10 +165,44 @@ export default function Spacecraft({ controls, groupRef }: Props) {
     })
   }, [])
 
+  useEffect(() => {
+    return registerRespawnHandler((pos) => {
+      if (group.current) {
+        group.current.position.set(...pos)
+        group.current.rotation.set(0, 0, 0)
+        velocity.current.set(0, 0, 0)
+        rotationSpeed.current = 0
+      }
+    })
+  }, [])
+
+  const shieldRef = useRef<THREE.Mesh>(null)
+
   useFrame((state, delta) => {
     if (!group.current) return
     groupRef.current = group.current
     const dt = Math.min(delta, 0.05)
+    const snap = getSnapshot()
+
+    // Shield bubble pulse
+    if (shieldRef.current) {
+      shieldRef.current.visible = snap.isInvulnerable
+      if (snap.isInvulnerable) {
+        const pulse = 0.4 + 0.6 * Math.sin(state.clock.elapsedTime * 16)
+        const mat = shieldRef.current.material as THREE.MeshBasicMaterial
+        mat.opacity = 0.25 + pulse * 0.35
+      }
+    }
+
+    // Freeze flight when crashed or cannot fly
+    if (snap.isCrashed || !canFly()) {
+      velocity.current.multiplyScalar(0.9)
+      group.current.position.addScaledVector(velocity.current, dt)
+      group.current.userData.velocityLength = 0
+      group.current.userData.isBoosting = false
+      return
+    }
+
     const c = controls.current
     if (!c) return
 
@@ -182,8 +216,8 @@ export default function Spacecraft({ controls, groupRef }: Props) {
     // --- Movement ---
     const forwardInput = (c.forward ? 1 : 0) - (c.backward ? 1 : 0)
     const vertInput = (c.up ? 1 : 0) - (c.down ? 1 : 0)
-    // In game mode, boost is gated by fuel; in explore mode it's always available
-    const boostActive = c.boost && (getSnapshot().mode === 'explore' || canBoost())
+    // In active mode, boost is gated by fuel; in cruise mode it's always available
+    const boostActive = c.boost && (getSnapshot().mode === 'cruise' || canBoost())
     const speedLimit = boostActive ? MAX_SPEED * BOOST_MULT : MAX_SPEED
     const accel = boostActive ? ACCEL * BOOST_MULT : ACCEL
 
@@ -463,6 +497,19 @@ export default function Spacecraft({ controls, groupRef }: Props) {
       <pointLight position={[0, 1, -4]} intensity={0.6} color="#ffaa66" distance={12} />
       {/* Cockpit glow */}
       <pointLight position={[0, 0.5, 1.0]} color="#4488ff" intensity={1.0} distance={6} />
+
+      {/* === Defensive Energy Shield Bubble (Active when Invulnerable / Respawning) === */}
+      <mesh ref={shieldRef} position={[0, 0, 0]} visible={false}>
+        <sphereGeometry args={[4.8, 24, 24]} />
+        <meshBasicMaterial
+          color="#a78bfa"
+          wireframe
+          transparent
+          opacity={0.4}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
     </group>
   )
 }
