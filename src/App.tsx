@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import CityScene from './city/CityScene'
+import SpaceScene from './three/SpaceScene'
 import DestinationPanel from './three/DestinationPanel'
 import { home, resume } from './three/portfolio'
-import { cityLandmarks } from './city/cityData'
+import { destinations } from './three/destinations'
 
 function WebGLFallback() {
   const [activeDest, setActiveDest] = useState<string | null>(null)
@@ -16,14 +16,14 @@ function WebGLFallback() {
       </header>
 
       <section style={{ maxWidth: 800, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-        {cityLandmarks.map((l) => (
+        {destinations.map((d) => (
           <button
-            key={l.id}
-            onClick={() => setActiveDest(l.id)}
+            key={d.id}
+            onClick={() => setActiveDest(d.id)}
             style={{
               padding: '20px',
               background: '#131b3b',
-              border: `1.5px solid ${l.accent}`,
+              border: `1.5px solid ${d.accent}`,
               borderRadius: 12,
               color: '#ffffff',
               textAlign: 'left',
@@ -33,15 +33,14 @@ function WebGLFallback() {
               gap: 8,
             }}
           >
-            <span style={{ fontSize: '1.8rem' }}>{l.icon}</span>
-            <strong style={{ fontSize: '1.1rem' }}>{l.badgeText}</strong>
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{l.description}</span>
+            <strong style={{ fontSize: '1.1rem' }}>{d.name}</strong>
+            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{d.subtitle}</span>
           </button>
         ))}
       </section>
 
       <footer style={{ maxWidth: 800, margin: '40px auto 0', textAlign: 'center', color: '#64748b' }}>
-        <p>Interactive 3D Portfolio City · Hrishita Patro</p>
+        <p>Space Portfolio · Hrishita Patro</p>
         {resume.file && (
           <a href={resume.file} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', marginRight: 16 }}>
             Download Resume PDF
@@ -74,8 +73,8 @@ function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100dvh', overflow: 'hidden', background: '#080d22' }}>
-      <CityScene />
+    <div style={{ width: '100vw', height: '100dvh', overflow: 'hidden', background: '#101d4d' }}>
+      <SpaceScene />
     </div>
   )
 }

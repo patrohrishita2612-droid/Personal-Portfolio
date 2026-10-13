@@ -13,14 +13,14 @@ type Props = {
 // Presentation metadata for the non-Projects stations. Same console language
 // as Mission Select, different identity per destination.
 const sectionMeta: Record<string, { main: string; sub: string; kicker: string; footer: string }> = {
-  home: { main: 'CIVIC PLAZA', sub: 'CENTRAL DISTRICT', kicker: 'PORTFOLIO OVERVIEW', footer: 'CITY LANDMARK / CIVIC PLAZA' },
-  about: { main: 'ABOUT ME', sub: 'EXPLORER PROFILE', kicker: 'PERSONAL PROFILE & INTERESTS', footer: 'CITY LANDMARK / EXPLORER PROFILE' },
-  skills: { main: 'SYSTEMS TOWER', sub: 'TECH STACK', kicker: 'TECHNICAL TOOLS & DISCIPLINES', footer: 'CITY LANDMARK / SYSTEMS TOWER' },
-  education: { main: 'ACADEMY CAMPUS', sub: 'EDUCATION', kicker: 'ACADEMIC ROUTE & ACHIEVEMENTS', footer: 'CITY LANDMARK / ACADEMY CAMPUS' },
-  experience: { main: 'CORPORATE TOWER', sub: 'EXPERIENCE', kicker: 'HACKATHONS & BOOTCAMPS', footer: 'CITY LANDMARK / CORPORATE TOWER' },
-  achievements: { main: 'HONORS OBSERVATORY', sub: 'ACHIEVEMENTS', kicker: 'COMPETITION HONOURS', footer: 'CITY LANDMARK / HONORS OBSERVATORY' },
-  resume: { main: 'CITY ARCHIVES', sub: 'RESUME & CV', kicker: 'MISSION BRIEF & DOWNLOAD', footer: 'CITY LANDMARK / ARCHIVES' },
-  contact: { main: 'TELECOM TERMINAL', sub: 'COMMUNICATIONS', kicker: 'DIRECT CONTACT CHANNELS', footer: 'CITY LANDMARK / TELECOM STATION' },
+  home: { main: 'BASE', sub: 'COMMAND CENTER', kicker: 'WELCOME ABOARD', footer: 'PORTFOLIO / HOME BASE' },
+  about: { main: 'ABOUT', sub: 'EXPLORER PROFILE', kicker: 'PERSONAL LOG', footer: 'PORTFOLIO / EXPLORER PROFILE' },
+  skills: { main: 'SKILLS', sub: 'SYSTEMS', kicker: 'ONBOARD SYSTEMS', footer: 'PORTFOLIO / SYSTEMS BAY' },
+  education: { main: 'EDUCATION', sub: 'ACADEMY', kicker: 'TRAINING ROUTE', footer: 'PORTFOLIO / ACADEMY' },
+  experience: { main: 'EXPERIENCE', sub: 'FLIGHT LOG', kicker: 'MISSION HISTORY', footer: 'PORTFOLIO / FLIGHT LOG' },
+  achievements: { main: 'ACHIEVEMENTS', sub: 'MISSION RECORDS', kicker: 'HONOURS ON RECORD', footer: 'PORTFOLIO / MISSION RECORDS' },
+  resume: { main: 'RESUME', sub: 'MISSION BRIEF', kicker: 'RESUME / CV', footer: 'PORTFOLIO / MISSION BRIEF' },
+  contact: { main: 'CONTACT', sub: 'COMMUNICATIONS', kicker: 'OPEN A CHANNEL', footer: 'PORTFOLIO / COMMUNICATIONS' },
 }
 
 export default function DestinationPanel({ destinationId, onClose }: Props) {
@@ -34,11 +34,11 @@ export default function DestinationPanel({ destinationId, onClose }: Props) {
         <header className="destination-panel-header">
           <div>
             <h2 className="destination-panel-title">
-              <span className="destination-panel-title-main">INNOVATION</span>
+              <span className="destination-panel-title-main">PROJECTS</span>
               <span className="destination-panel-title-divider">/</span>
-              <span className="destination-panel-title-sub">PROJECT DISTRICT</span>
+              <span className="destination-panel-title-sub">MISSION SELECT</span>
             </h2>
-            <p className="destination-panel-kicker">SELECT A PROJECT SHOWCASE</p>
+            <p className="destination-panel-kicker">SELECT A PROJECT DESTINATION</p>
           </div>
           <button className="destination-panel-close" type="button" onClick={onClose} aria-label="Close projects">
             <span aria-hidden="true">×</span>
@@ -91,8 +91,8 @@ export default function DestinationPanel({ destinationId, onClose }: Props) {
         </article>
 
         <footer className="destination-panel-footer">
-          <span>PORTFOLIO CITY / PROJECT ARCHIVE</span>
-          <span>PRESS ESC TO RETURN TO CITY</span>
+          <span>PORTFOLIO / PROJECT ARCHIVE</span>
+          <span>PRESS ESC TO RETURN</span>
         </footer>
       </section>
     </div>
@@ -127,7 +127,7 @@ export default function DestinationPanel({ destinationId, onClose }: Props) {
 
         <footer className="destination-panel-footer">
           <span>{meta.footer}</span>
-          <span>PRESS ESC TO RETURN TO CITY</span>
+          <span>PRESS ESC TO RETURN</span>
         </footer>
       </section>
     </div>

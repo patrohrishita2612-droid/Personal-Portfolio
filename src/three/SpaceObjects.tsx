@@ -3,10 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // ---------------------------------------------------------------------------
-// Environmental objects — non-interactive celestial scenery, asteroid belts,
-// satellites, and discovery features that make flying through deep space
-// feel rich, organic, and game-like without cluttering UI or navigation.
-// Uses instancedMesh for performance.
+// SpaceObjects — Environmental objects at compact-layout positions
 // ---------------------------------------------------------------------------
 
 interface AsteroidFieldProps {
@@ -21,7 +18,6 @@ function AsteroidField({ center, radius, count, color, speed = 0.02 }: AsteroidF
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const groupRef = useRef<THREE.Group>(null)
 
-  // Irregular asteroid geometry using deformed icosahedron
   const geometry = useMemo(() => {
     const geo = new THREE.IcosahedronGeometry(1.4, 1)
     const pos = geo.getAttribute('position')
@@ -36,7 +32,6 @@ function AsteroidField({ center, radius, count, color, speed = 0.02 }: AsteroidF
     return geo
   }, [])
 
-  // Material with subtle metalness and roughness for space rock look
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
@@ -48,11 +43,9 @@ function AsteroidField({ center, radius, count, color, speed = 0.02 }: AsteroidF
     [color],
   )
 
-  // Set up instanced matrix transforms once
   const dummy = useMemo(() => new THREE.Object3D(), [])
 
   useMemo(() => {
-    // Deterministic random seed for consistency
     const seed = center[0] * 17 + center[2] * 31
     let pseudoRand = Math.sin(seed) * 10000
 
@@ -64,7 +57,6 @@ function AsteroidField({ center, radius, count, color, speed = 0.02 }: AsteroidF
     setTimeout(() => {
       if (!meshRef.current) return
       for (let i = 0; i < count; i++) {
-        // Natural ring/cloud dispersion
         const theta = getRand() * Math.PI * 2
         const phi = (getRand() - 0.5) * Math.PI * 0.4
         const dist = (0.2 + 0.8 * Math.sqrt(getRand())) * radius
@@ -97,9 +89,6 @@ function AsteroidField({ center, radius, count, color, speed = 0.02 }: AsteroidF
   )
 }
 
-// ---------------------------------------------------------------------------
-// Discovery: Abandoned Satellite Probe drifting in deep space
-// ---------------------------------------------------------------------------
 function AbandonedSatellite({ position }: { position: [number, number, number] }) {
   const satelliteRef = useRef<THREE.Group>(null)
 
@@ -113,27 +102,22 @@ function AbandonedSatellite({ position }: { position: [number, number, number] }
 
   return (
     <group ref={satelliteRef} position={position} scale={1.2}>
-      {/* Central Probe Body */}
       <mesh>
         <octahedronGeometry args={[2.2, 0]} />
         <meshStandardMaterial color="#8a99ad" metalness={0.9} roughness={0.25} />
       </mesh>
-      {/* Solar Panel Wing Left */}
       <mesh position={[-5, 0, 0]}>
         <boxGeometry args={[5, 1.2, 0.1]} />
         <meshStandardMaterial color="#1e3a60" emissive="#102540" emissiveIntensity={0.5} metalness={0.95} />
       </mesh>
-      {/* Solar Panel Wing Right */}
       <mesh position={[5, 0, 0]}>
         <boxGeometry args={[5, 1.2, 0.1]} />
         <meshStandardMaterial color="#1e3a60" emissive="#102540" emissiveIntensity={0.5} metalness={0.95} />
       </mesh>
-      {/* Antenna Dish */}
       <mesh position={[0, 2.5, 0]} rotation={[-Math.PI / 4, 0, 0]}>
         <coneGeometry args={[1.5, 0.8, 16, 1, true]} />
         <meshStandardMaterial color="#b0c4de" metalness={0.8} roughness={0.3} side={THREE.DoubleSide} />
       </mesh>
-      {/* Red Beacon Pulse Light */}
       <mesh position={[0, -2.4, 0]}>
         <sphereGeometry args={[0.3, 12, 12]} />
         <meshBasicMaterial color="#ff3344" />
@@ -143,9 +127,6 @@ function AbandonedSatellite({ position }: { position: [number, number, number] }
   )
 }
 
-// ---------------------------------------------------------------------------
-// Discovery: Cosmic Crystal Cluster glowing in deep space
-// ---------------------------------------------------------------------------
 function FloatingCrystals({ position }: { position: [number, number, number] }) {
   const crystalRef = useRef<THREE.Group>(null)
 
@@ -159,7 +140,6 @@ function FloatingCrystals({ position }: { position: [number, number, number] }) 
 
   return (
     <group ref={crystalRef} position={position}>
-      {/* Cluster of 5 pointed crystals */}
       {[
         { pos: [0, 0, 0] as [number, number, number], rot: [0, 0, 0], scale: 3.2 },
         { pos: [-2.5, -1, 1.5] as [number, number, number], rot: [0.3, 0.2, -0.4], scale: 2.1 },
@@ -184,9 +164,6 @@ function FloatingCrystals({ position }: { position: [number, number, number] }) 
   )
 }
 
-// ---------------------------------------------------------------------------
-// Discovery: Ancient Debris Ring Fragment
-// ---------------------------------------------------------------------------
 function RingDebris({ position }: { position: [number, number, number] }) {
   const ringRef = useRef<THREE.Group>(null)
 
@@ -211,37 +188,20 @@ function RingDebris({ position }: { position: [number, number, number] }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Main SpaceObjects collection
-// ---------------------------------------------------------------------------
 export default function SpaceObjects() {
   return (
     <group>
-      {/* --- Asteroid Belts / Clusters between destinations --- */}
-      {/* Cluster 1: Between BASE and PROJECTS */}
-      <AsteroidField center={[-140, 5, 20]} radius={55} count={110} color="#475569" speed={0.015} />
+      {/* Asteroid Belts repositioned for compact layout */}
+      <AsteroidField center={[-50, 5, -10]} radius={20} count={60} color="#475569" speed={0.015} />
+      <AsteroidField center={[80, -5, 90]} radius={25} count={70} color="#334155" speed={0.012} />
+      <AsteroidField center={[-145, 8, 175]} radius={28} count={80} color="#474056" speed={0.018} />
+      <AsteroidField center={[85, 9, 275]} radius={30} count={85} color="#524632" speed={0.01} />
+      <AsteroidField center={[-100, -11, 370]} radius={32} count={90} color="#3b4252" speed={0.014} />
 
-      {/* Cluster 2: Between PROJECTS and ABOUT */}
-      <AsteroidField center={[220, -12, 260]} radius={70} count={140} color="#334155" speed={0.012} />
-
-      {/* Cluster 3: Between RESUME and SKILLS */}
-      <AsteroidField center={[-420, 15, 480]} radius={80} count={160} color="#474056" speed={0.018} />
-
-      {/* Cluster 4: Deep space belt near EDUCATION */}
-      <AsteroidField center={[240, 25, 780]} radius={85} count={170} color="#524632" speed={0.01} />
-
-      {/* Cluster 5: Outer galaxy belt past EXPERIENCE */}
-      <AsteroidField center={[-280, -30, 1050]} radius={90} count={180} color="#3b4252" speed={0.014} />
-
-      {/* --- Environmental Discoveries --- */}
-      {/* Abandoned Satellite Probe */}
-      <AbandonedSatellite position={[-190, 35, 420]} />
-
-      {/* Floating Crystals */}
-      <FloatingCrystals position={[280, -20, 620]} />
-
-      {/* Ancient Debris Ring Fragment */}
-      <RingDebris position={[-260, -15, 880]} />
+      {/* Environmental discoveries at compact positions */}
+      <AbandonedSatellite position={[-70, 12, 155]} />
+      <FloatingCrystals position={[100, -7, 220]} />
+      <RingDebris position={[-92, -5, 315]} />
     </group>
   )
 }

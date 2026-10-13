@@ -11,15 +11,22 @@ import CameraRig from './CameraRig'
 import Destination from './Destination'
 import DestinationPanel from './DestinationPanel'
 import HUD from './HUD'
+import Asteroids from './Asteroids'
+import Collectibles from './Collectibles'
+import GameHUD from './GameHUD'
+import GameTicker from './GameTicker'
 import { useControls } from './useControls'
 import { destinations, destinationIds } from './destinations'
 import { INTERACTION_DISTANCE } from './Destination'
+import { getSnapshot, setMode, togglePause } from './GameManager'
+import type { GameMode } from './GameManager'
 
 export default function SpaceScene() {
   const controls = useControls()
   const spacecraftRef = useRef<THREE.Group>(null)
-  // Which destination panel is open (null = none). 'projects' = Mission Select.
+  const shakeRef = useRef(0)          // impact shake intensity
   const [activePanel, setActivePanel] = useState<string | null>(null)
+  const [gameMode, setGameMode] = useState<GameMode>('explore')
 
   const openPanel = (id: string) => {
     setActivePanel(id)
@@ -50,7 +57,7 @@ export default function SpaceScene() {
     openPanel(nearestId ?? 'projects')
   }, [])
 
-  // Hash routing: #dest=<id> opens a destination directly (deep links + back/forward)
+  // Hash routing
   useEffect(() => {
     const readHash = () => {
       const match = /#dest=([\w-]+)/.exec(window.location.hash)
@@ -62,7 +69,32 @@ export default function SpaceScene() {
     return () => window.removeEventListener('hashchange', readHash)
   }, [])
 
-  // Painted gradient sky — layered colour instead of an empty black void
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.code === 'Enter') {
+        handleExplore()
+      } else if (e.code === 'Escape') {
+        closePanel()
+      } else if (e.code === 'KeyP') {
+        const snap = getSnapshot()
+        if (snap.mode === 'game') togglePause()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [handleExplore])
+
+  const handleModeChange = useCallback((m: GameMode) => {
+    setGameMode(m)
+    setMode(m)
+  }, [])
+
+  const handleShake = useCallback(() => {
+    shakeRef.current = 1.2
+  }, [])
+
+  // Painted gradient sky
   const skyTexture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 8
@@ -70,11 +102,11 @@ export default function SpaceScene() {
     const context = canvas.getContext('2d')
     if (!context) return null
     const gradient = context.createLinearGradient(0, 0, 0, 512)
-    gradient.addColorStop(0, '#2b1a5e')   // zenith — violet
-    gradient.addColorStop(0.3, '#182a66') // indigo
-    gradient.addColorStop(0.58, '#0d1a44') // deep navy
-    gradient.addColorStop(0.78, '#2a1c4e') // plum band
-    gradient.addColorStop(1, '#3d1f3f')   // warm dusty horizon
+    gradient.addColorStop(0, '#2b1a5e')
+    gradient.addColorStop(0.3, '#182a66')
+    gradient.addColorStop(0.58, '#0d1a44')
+    gradient.addColorStop(0.78, '#2a1c4e')
+    gradient.addColorStop(1, '#3d1f3f')
     context.fillStyle = gradient
     context.fillRect(0, 0, 8, 512)
     const texture = new THREE.CanvasTexture(canvas)
@@ -82,59 +114,49 @@ export default function SpaceScene() {
     return texture
   }, [])
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.code === 'Enter') {
-        handleExplore()
-      } else if (e.code === 'Escape') {
-        closePanel()
-      }
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [handleExplore])
-
   return (
     <>
       <Canvas
-        camera={{ fov: 60, near: 0.1, far: 6000, position: [0, 5, -30] }}
+        camera={{ fov: 60, near: 0.1, far: 2500, position: [0, 5, -30] }}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
       >
-        {/* Deep navy backdrop + gradient sky shell so the void has painted layers */}
         <color attach="background" args={['#101d4d']} />
-        <fog attach="fog" args={['#101d4d', 500, 4200]} />
+        <fog attach="fog" args={['#101d4d', 200, 1600]} />
         {skyTexture && (
           <mesh>
             <sphereGeometry args={[5000, 24, 32]} />
-            {/* fog off — the dome must never wash out to flat fog colour */}
             <meshBasicMaterial map={skyTexture} side={THREE.BackSide} fog={false} depthWrite={false} />
           </mesh>
         )}
 
-        {/* Ambient base lighting — soft lift so surfaces stay readable */}
         <ambientLight intensity={0.3} color="#5f74c4" />
-
-        {/* Key light — cool daylight from upper right */}
         <directionalLight position={[15, 20, 8]} intensity={1.0} color="#d8e6ff" />
-
-        {/* Rim light — warm from behind left */}
         <directionalLight position={[-20, 5, -15]} intensity={0.55} color="#ffb287" />
-
-        {/* Fill — faint magenta from below */}
         <pointLight position={[0, -15, 5]} intensity={0.35} color="#ff77b3" distance={50} />
 
         <Suspense fallback={null}>
           <Starfield />
           <Nebulae />
-          {/* Primary landmark ahead-left + a second, dimmer galaxy behind the
-              player so turning around never meets an empty void */}
           <Galaxy />
-          <Galaxy position={[680, -240, -2350]} rotation={[-1.05, 0.2, -0.35]} scale={0.72} />
+          <Galaxy position={[240, -85, -820]} rotation={[-1.05, 0.2, -0.35]} scale={0.72} />
           <Scenery />
           <SpaceObjects />
           <Spacecraft controls={controls} groupRef={spacecraftRef} />
           <CameraRig controls={controls} target={spacecraftRef} />
+          <GameTicker spacecraftRef={spacecraftRef} shakeRef={shakeRef} />
+
+          {/* Game mode elements */}
+          <Asteroids
+            spacecraftRef={spacecraftRef}
+            mode={gameMode}
+            onShake={handleShake}
+          />
+          <Collectibles
+            spacecraftRef={spacecraftRef}
+            mode={gameMode}
+          />
+
           {destinations.map((dest) => (
             <Destination
               key={dest.id}
@@ -153,7 +175,10 @@ export default function SpaceScene() {
           ))}
         </Suspense>
       </Canvas>
+
+      {/* DOM overlays */}
       <HUD controls={controls} onExplore={handleExplore} />
+      <GameHUD onModeChange={handleModeChange} />
       {activePanel && (
         <DestinationPanel destinationId={activePanel} onClose={closePanel} />
       )}

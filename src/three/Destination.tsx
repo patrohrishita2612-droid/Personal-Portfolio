@@ -25,7 +25,7 @@ type Props = {
   onExplore?: () => void
 }
 
-export const INTERACTION_DISTANCE = 35
+export const INTERACTION_DISTANCE = 32
 
 const DEFAULT_PALETTE: PlanetPalette = {
   deep: '#16215f',
@@ -147,7 +147,7 @@ export default function Destination({
     const distToCam = toSelf.length()
     camera.getWorldDirection(scratchB)
     const inFront = toSelf.dot(scratchB) > 0
-    const mode = !inFront ? 'off' : distToCam > 2800 ? 'faded' : 'on'
+    const mode = !inFront ? 'off' : distToCam > 900 ? 'faded' : 'on'
     setLabelMode((prev) => (prev === mode ? prev : mode))
   })
 

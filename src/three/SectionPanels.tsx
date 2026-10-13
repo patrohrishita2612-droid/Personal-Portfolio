@@ -18,7 +18,7 @@ function Screen({ index, children }: BodyProps & { children: ReactNode }) {
   return (
     <article className="section-screen">
       <div className="section-index">
-        <span>DISTRICT</span>
+        <span>DESTINATION</span>
         <span className="section-ghost" aria-hidden="true">{index}</span>
       </div>
       {children}
@@ -31,7 +31,7 @@ function Screen({ index, children }: BodyProps & { children: ReactNode }) {
 function HomeBody({ index }: BodyProps) {
   return (
     <Screen index={index}>
-      <p className="section-eyebrow">WELCOME TO THE CITY</p>
+      <p className="section-eyebrow">WELCOME ABOARD</p>
       <h1 className="section-hero-name">{home.name}</h1>
       <p className="section-role">{home.role}</p>
       <p className="section-lede">{home.intro1}</p>
@@ -45,9 +45,9 @@ function HomeBody({ index }: BodyProps) {
         ))}
       </dl>
       <p className="section-hint">
-        <span className="hint-key">ORBIT</span> DRAG ·
-        <span className="hint-key">ZOOM</span> SCROLL ·
-        CLICK ANY BUILDING TO INSPECT DISTRICT
+        <span className="hint-key">W A S D</span> FLY ·
+        <span className="hint-key">SHIFT</span> BOOST ·
+        ARRIVE AT A PLANET AND PRESS <span className="hint-key">ENTER</span>
       </p>
     </Screen>
   )

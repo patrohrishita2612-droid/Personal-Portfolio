@@ -4,9 +4,7 @@ import * as THREE from 'three'
 import type { PlanetPalette } from './destinations'
 
 // ---------------------------------------------------------------------------
-// Decorative distant bodies. Non-interactive, no point lights — they are lit
-// by the scene's directional sun and hazed by distance fog, which gives the
-// mid/far field real depth without cluttering the flight paths.
+// Decorative distant bodies — scaled to compact layout
 // ---------------------------------------------------------------------------
 
 type SceneryPlanetProps = {
@@ -35,7 +33,6 @@ function SceneryPlanet({ position, palette, radius = 40, spin = 0.01 }: SceneryP
       const z = positions.getZ(i) / radius
       const longitude = Math.atan2(z, x)
 
-      // Soft continents + broken latitude banding — varied, never flat
       const grain = Math.sin(longitude * 6.1 + y * 9.4) * Math.cos(longitude * 4.7 - y * 7.2)
       const band = 0.5 + 0.5 * Math.sin(y * 6.5 + Math.sin(longitude * 2.4))
 
@@ -96,30 +93,27 @@ function SceneryPlanet({ position, palette, radius = 40, spin = 0.01 }: SceneryP
 export default function Scenery() {
   return (
     <group>
-      {/* Warm giant off the starboard bow (ahead-right) */}
+      {/* Distant decorative bodies scaled to match compact layout */}
       <SceneryPlanet
-        position={[1450, 260, 950]}
+        position={[510, 90, 335]}
         radius={46}
         spin={0.012}
         palette={{ deep: '#4a2c12', mid: '#a86a32', light: '#e8b06a', accent: '#ffd9a8', pole: '#fff2dc' }}
       />
-      {/* Violet giant rear starboard — landmark when the player turns around */}
       <SceneryPlanet
-        position={[-865, -180, -1500]}
+        position={[-305, -63, -530]}
         radius={64}
         spin={0.008}
         palette={{ deep: '#2a1a58', mid: '#6a4ab8', light: '#a88ae0', accent: '#e0b8f0', pole: '#efe8ff' }}
       />
-      {/* Cool teal body low behind */}
       <SceneryPlanet
-        position={[520, -520, -1550]}
+        position={[184, -184, -545]}
         radius={38}
         spin={0.015}
         palette={{ deep: '#0c3440', mid: '#1f7f90', light: '#5ac8d4', accent: '#a8ecf0', pole: '#e8fbff' }}
       />
-      {/* Far royal-blue world high ahead-left, near the primary galaxy */}
       <SceneryPlanet
-        position={[-880, 620, 1750]}
+        position={[-310, 218, 615]}
         radius={56}
         spin={0.006}
         palette={{ deep: '#12245f', mid: '#2f5ac9', light: '#7fa8e8', accent: '#c8dcf8', pole: '#f4f8ff' }}

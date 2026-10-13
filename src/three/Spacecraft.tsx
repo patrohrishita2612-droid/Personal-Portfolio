@@ -3,6 +3,7 @@ import type { MutableRefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { ControlsRef } from './useControls'
+import { canBoost, getSnapshot } from './GameManager'
 
 type Props = {
   controls: ControlsRef
@@ -181,8 +182,10 @@ export default function Spacecraft({ controls, groupRef }: Props) {
     // --- Movement ---
     const forwardInput = (c.forward ? 1 : 0) - (c.backward ? 1 : 0)
     const vertInput = (c.up ? 1 : 0) - (c.down ? 1 : 0)
-    const speedLimit = c.boost ? MAX_SPEED * BOOST_MULT : MAX_SPEED
-    const accel = c.boost ? ACCEL * BOOST_MULT : ACCEL
+    // In game mode, boost is gated by fuel; in explore mode it's always available
+    const boostActive = c.boost && (getSnapshot().mode === 'explore' || canBoost())
+    const speedLimit = boostActive ? MAX_SPEED * BOOST_MULT : MAX_SPEED
+    const accel = boostActive ? ACCEL * BOOST_MULT : ACCEL
 
     if (forwardInput !== 0) {
       const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(group.current.quaternion)
@@ -205,10 +208,13 @@ export default function Spacecraft({ controls, groupRef }: Props) {
 
     group.current.position.addScaledVector(velocity.current, dt)
 
-    // --- Engine visuals ---
+    // Expose speed + boost state for GameTicker / GameManager
+    group.current.userData.velocityLength = velocity.current.length()
+    group.current.userData.isBoosting = c.boost && c.forward
+
     const speed = velocity.current.length()
     const speedRatio = Math.min(speed / MAX_SPEED, 1.5)
-    const isBoost = c.boost && c.forward
+    const isBoost = boostActive && c.forward
     const isThrusting = c.forward
     const t = state.clock.elapsedTime
     const pulse = 0.7 + Math.sin(t * 15) * 0.15

@@ -1,8 +1,7 @@
 // ---------------------------------------------------------------------------
 // Destination registry — every portfolio station in the universe.
-// Positions are spread across a comfortable, navigable 3D flight envelope
-// (Y coords within [-15, +22]) so every destination is naturally reachable
-// without extreme climbing or descending. Projects retains its benchmark position.
+// Positions are compressed into a compact, navigable flight envelope
+// so visitors can fly between planets in seconds rather than minutes.
 // ---------------------------------------------------------------------------
 
 export type PlanetPalette = {
@@ -37,7 +36,7 @@ export const destinations: DestinationDef[] = [
     id: 'home',
     name: 'BASE',
     subtitle: 'COMMAND CENTER',
-    position: [-320, 25, -180],
+    position: [-110, 10, -65],
     accent: '#46e0e8',
     scale: 1.12,
     moons: true,
@@ -56,7 +55,7 @@ export const destinations: DestinationDef[] = [
     id: 'projects',
     name: 'PROJECTS',
     subtitle: 'MISSION SELECT',
-    position: [0, 0, 150],
+    position: [0, 0, 55],
     accent: '#46e0e8',
     ring: true,
     moons: true,
@@ -67,7 +66,7 @@ export const destinations: DestinationDef[] = [
     id: 'about',
     name: 'ABOUT',
     subtitle: 'EXPLORER PROFILE',
-    position: [520, -20, 320],
+    position: [180, -8, 115],
     accent: '#b48ce8',
     scale: 1.0,
     type: 'moon',
@@ -83,7 +82,7 @@ export const destinations: DestinationDef[] = [
     id: 'skills',
     name: 'SKILLS',
     subtitle: 'SYSTEMS',
-    position: [-720, 45, 820],
+    position: [-250, 16, 290],
     accent: '#35cfc4',
     scale: 1.05,
     type: 'crystal',
@@ -99,7 +98,7 @@ export const destinations: DestinationDef[] = [
     id: 'education',
     name: 'EDUCATION',
     subtitle: 'ACADEMY',
-    position: [620, 60, 1100],
+    position: [215, 22, 385],
     accent: '#e8b64c',
     scale: 1.15,
     ring: true,
@@ -116,7 +115,7 @@ export const destinations: DestinationDef[] = [
     id: 'experience',
     name: 'EXPERIENCE',
     subtitle: 'FLIGHT LOG',
-    position: [-580, -35, 1350],
+    position: [-200, -13, 475],
     accent: '#ff8b3d',
     scale: 1.05,
     moons: true,
@@ -133,7 +132,7 @@ export const destinations: DestinationDef[] = [
     id: 'achievements',
     name: 'ACHIEVEMENTS',
     subtitle: 'MISSION RECORDS',
-    position: [780, 30, 780],
+    position: [270, 11, 275],
     accent: '#ffd9a0',
     scale: 1.1,
     type: 'star',
@@ -149,7 +148,7 @@ export const destinations: DestinationDef[] = [
     id: 'resume',
     name: 'RESUME',
     subtitle: 'MISSION BRIEF',
-    position: [-480, 35, 380],
+    position: [-165, 13, 135],
     accent: '#7da8ff',
     scale: 0.95,
     type: 'satellite',
@@ -165,7 +164,7 @@ export const destinations: DestinationDef[] = [
     id: 'contact',
     name: 'CONTACT',
     subtitle: 'COMMUNICATIONS',
-    position: [480, -20, -320],
+    position: [165, -8, -115],
     accent: '#4fd4c8',
     scale: 1.0,
     type: 'anomaly',
