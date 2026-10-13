@@ -1,0 +1,54 @@
+/* ── Tactical Radar Minimap Styles ── */
+
+.radar-minimap-container {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  background: rgba(10, 16, 38, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 16px rgba(56, 189, 248, 0.05);
+  user-select: none;
+  z-index: 15;
+}
+
+.radar-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.radar-label {
+  color: #38bdf8;
+}
+
+.radar-range {
+  color: #64748b;
+}
+
+.radar-canvas {
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+}
+
+@media (max-width: 768px) {
+  .radar-minimap-container {
+    bottom: 80px;
+    right: 12px;
+    padding: 6px 8px 8px;
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { ControlsRef, ControlState } from './useControls'
 import { setControlState } from './useControls'
+import { subscribe, getSnapshot } from './GameManager'
 import './HUD.css'
 
 type Props = {
@@ -36,6 +37,13 @@ function useIsMobileTouch() {
 
 export default function HUD({ controls, onExplore }: Props) {
   const isMobileTouch = useIsMobileTouch()
+  const [gameStarted, setGameStarted] = useState(() => getSnapshot().gameStarted)
+
+  useEffect(() => {
+    return subscribe((snap) => setGameStarted(snap.gameStarted))
+  }, [])
+
+  if (!gameStarted) return null
 
   const bindTouchControl = (action: keyof ControlState) => ({
     onPointerDown: (e: React.PointerEvent) => {

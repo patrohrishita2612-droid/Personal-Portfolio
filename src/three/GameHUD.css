@@ -86,6 +86,27 @@
   color: #e0f2fe;
 }
 
+.alert-discovery {
+  background: rgba(124, 58, 237, 0.88);
+  border: 1.5px solid #a78bfa;
+  color: #f5f3ff;
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.6);
+  animation: slide-alert 0.3s ease-out, discovery-glow 1s infinite alternate;
+}
+
+@keyframes discovery-glow {
+  from { box-shadow: 0 0 12px rgba(167, 139, 250, 0.4); }
+  to { box-shadow: 0 0 24px rgba(167, 139, 250, 0.85); }
+}
+
+.alert-mission-complete {
+  background: rgba(217, 119, 6, 0.9);
+  border: 1.5px solid #fbbf24;
+  color: #fffbeb;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+  animation: slide-alert 0.3s ease-out;
+}
+
 .alert-threat {
   background: rgba(153, 27, 27, 0.9);
   border: 1.5px solid #ef4444;
@@ -170,7 +191,30 @@
   flex: 1;
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 12px;
   padding: 0 16px;
+}
+
+.waypoint-ticker {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-family: 'Consolas', monospace;
+}
+
+.waypoint-target {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.waypoint-dist {
+  color: #f59e0b;
 }
 
 .mission-ticker {
@@ -182,7 +226,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.78rem;
-  max-width: 500px;
+  max-width: 420px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -196,6 +240,25 @@
 
 .mission-text {
   color: #cbd5e1;
+}
+
+.hud-btn-icon {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.hud-btn-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .topbar-right {
@@ -375,6 +438,12 @@
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.chip-streak {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 /* ── Desktop Key Controls Guide ── */
@@ -610,8 +679,18 @@
 /* ── Mobile Viewports ── */
 @media (max-width: 768px) {
   .hud-topbar {
-    padding: 0 10px;
+    padding: 0 8px;
     height: 42px;
+  }
+
+  .ship-callsign,
+  .status-divider {
+    display: none;
+  }
+
+  .hud-mode-toggle {
+    font-size: 0.66rem;
+    padding: 4px 8px;
   }
 
   .topbar-center {

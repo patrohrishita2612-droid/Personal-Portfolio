@@ -16,6 +16,7 @@ import Collectibles from './Collectibles'
 import ShootingStars from './ShootingStars'
 import GameHUD from './GameHUD'
 import GameTicker from './GameTicker'
+import StartScreen from './StartScreen'
 import { useControls } from './useControls'
 import { destinations, destinationIds } from './destinations'
 import { INTERACTION_DISTANCE } from './Destination'
@@ -185,7 +186,12 @@ export default function SpaceScene() {
 
       {/* Unified HUD & Portfolio Modals */}
       <HUD controls={controls} onExplore={handleExplore} />
-      <GameHUD isPanelOpen={Boolean(activePanel)} />
+      <GameHUD
+        isPanelOpen={Boolean(activePanel)}
+        spacecraftRef={spacecraftRef}
+        onOpenPortfolioDirectly={() => openPanel('projects')}
+      />
+      <StartScreen onOpenPortfolioDirectly={() => openPanel('projects')} />
       {activePanel && (
         <DestinationPanel destinationId={activePanel} onClose={closePanel} />
       )}

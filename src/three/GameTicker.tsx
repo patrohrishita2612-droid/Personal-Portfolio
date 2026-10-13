@@ -1,17 +1,18 @@
 import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { tickGame } from './GameManager'
+import { tickGame, updateWaypoint, onPlanetArrival } from './GameManager'
+import { destinations } from './destinations'
 import type { MutableRefObject } from 'react'
 
 // ---------------------------------------------------------------------------
-// GameTicker — runs inside the R3F Canvas loop to advance game state
-// and apply screen-shake on impact.
+// GameTicker — runs inside the R3F Canvas loop to advance game state,
+// update radar waypoints, detect planet discovery, and apply screen shake.
 // ---------------------------------------------------------------------------
 
 type Props = {
   spacecraftRef: MutableRefObject<THREE.Group | null>
-  shakeRef: MutableRefObject<number>   // shake intensity set by Asteroids
+  shakeRef: MutableRefObject<number> // shake intensity set by Asteroids
 }
 
 export default function GameTicker({ spacecraftRef, shakeRef }: Props) {
@@ -29,6 +30,19 @@ export default function GameTicker({ spacecraftRef, shakeRef }: Props) {
     const isBoosting = (ship.userData.isBoosting as boolean | undefined) ?? false
 
     tickGame(delta, shipSpeed, isBoosting)
+
+    // Update Waypoint Telemetry
+    updateWaypoint(ship.position.x, ship.position.y, ship.position.z)
+
+    // Check Destination Proximity for Planet Discovery
+    for (const d of destinations) {
+      const dx = ship.position.x - d.position[0]
+      const dy = ship.position.y - d.position[1]
+      const dz = ship.position.z - d.position[2]
+      if (dx * dx + dy * dy + dz * dz < 38 * 38) {
+        onPlanetArrival(d.id, d.name)
+      }
+    }
 
     // --- Screen Shake on impact ---
     const shakeIntensity = shakeRef.current
