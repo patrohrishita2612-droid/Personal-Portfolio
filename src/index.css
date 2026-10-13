@@ -1,11 +1,32 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-display: 'Fredoka', 'Outfit', sans-serif;
+  --font-hand: 'Caveat', cursive, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Consolas', 'Courier New', monospace;
+
+  /* Color Palette — Whimsical Cartoon Space */
+  --color-space-deep: #070b25;
+  --color-indigo: #1e1b4b;
+  --color-indigo-dark: #121033;
+  --color-cyan: #06b6d4;
+  --color-cyan-bright: #22d3ee;
+  --color-cyan-glow: rgba(34, 211, 238, 0.4);
+  --color-mint: #10b981;
+  --color-mint-bright: #34d399;
+  --color-cream: #fef3c7;
+  --color-warm-white: #fffbeb;
+  --color-tangerine: #f97316;
+  --color-coral: #fb923c;
+  --color-lavender: #c084fc;
+  --color-gold: #fbbf24;
+
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #101d4d;
+  color: #f1f5f9;
+  background-color: var(--color-space-deep);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,6 +38,8 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  background: var(--color-space-deep);
+  font-family: var(--font-body);
 }
 
 #root {

@@ -39,6 +39,134 @@ const DEFAULT_PALETTE: PlanetPalette = {
 const scratchA = new THREE.Vector3()
 const scratchB = new THREE.Vector3()
 
+// Generates procedural illustrated cartoon planet texture
+function createCartoonPlanetTexture(p: PlanetPalette): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return new THREE.CanvasTexture(canvas)
+
+  // Base planetary fill
+  ctx.fillStyle = p.mid
+  ctx.fillRect(0, 0, 512, 256)
+
+  // Bold wavy cartoon latitude bands
+  const bands = [
+    { y: 38, h: 26, color: p.deep, wave: 12, freq: 3 },
+    { y: 72, h: 20, color: p.light, wave: 8, freq: 4 },
+    { y: 104, h: 42, color: p.accent, wave: 16, freq: 2 },
+    { y: 154, h: 28, color: p.deep, wave: 14, freq: 3 },
+    { y: 190, h: 20, color: p.light, wave: 9, freq: 5 },
+  ]
+
+  for (const b of bands) {
+    ctx.fillStyle = b.color
+    ctx.beginPath()
+    ctx.moveTo(0, b.y)
+    for (let x = 0; x <= 512; x += 16) {
+      const cy = b.y + Math.sin((x / 512) * Math.PI * 2 * b.freq) * b.wave
+      ctx.lineTo(x, cy)
+    }
+    for (let x = 512; x >= 0; x -= 16) {
+      const cy = b.y + b.h + Math.sin((x / 512) * Math.PI * 2 * b.freq + 0.4) * b.wave
+      ctx.lineTo(x, cy)
+    }
+    ctx.closePath()
+    ctx.fill()
+  }
+
+  // Cartoon crater dots with inner shadow and highlight rim
+  const craters = [
+    { x: 80, y: 55, r: 14 },
+    { x: 140, y: 125, r: 22 },
+    { x: 260, y: 75, r: 16 },
+    { x: 330, y: 165, r: 20 },
+    { x: 420, y: 88, r: 13 },
+    { x: 460, y: 165, r: 14 },
+    { x: 210, y: 185, r: 15 },
+    { x: 490, y: 45, r: 10 },
+  ]
+
+  for (const c of craters) {
+    // Outer highlight rim
+    ctx.fillStyle = p.pole
+    ctx.beginPath()
+    ctx.arc(c.x, c.y, c.r + 2, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Inner shadow floor
+    ctx.fillStyle = p.deep
+    ctx.beginPath()
+    ctx.arc(c.x + 1.5, c.y + 1.5, c.r, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Base crater floor
+    ctx.fillStyle = p.mid
+    ctx.beginPath()
+    ctx.arc(c.x - 1, c.y - 1, Math.max(1, c.r - 2.5), 0, Math.PI * 2)
+    ctx.fill()
+
+    // Crescent highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)'
+    ctx.beginPath()
+    ctx.arc(c.x - 2, c.y - 2, Math.max(1, c.r - 6), 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Wavy cartoon polar caps
+  ctx.fillStyle = p.pole
+  // North cap
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(512, 0)
+  ctx.lineTo(512, 24)
+  for (let x = 512; x >= 0; x -= 16) {
+    ctx.lineTo(x, 22 + Math.sin((x / 512) * Math.PI * 8) * 5)
+  }
+  ctx.closePath()
+  ctx.fill()
+
+  // South cap
+  ctx.beginPath()
+  ctx.moveTo(0, 256)
+  ctx.lineTo(512, 256)
+  ctx.lineTo(512, 232)
+  for (let x = 512; x >= 0; x -= 16) {
+    ctx.lineTo(x, 234 - Math.sin((x / 512) * Math.PI * 8) * 5)
+  }
+  ctx.closePath()
+  ctx.fill()
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
+// Generates procedural striped cartoon ring texture
+function createCartoonRingTexture(p: PlanetPalette): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 16
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return new THREE.CanvasTexture(canvas)
+
+  const grad = ctx.createLinearGradient(0, 0, 256, 0)
+  grad.addColorStop(0, 'rgba(0,0,0,0)')
+  grad.addColorStop(0.12, p.deep)
+  grad.addColorStop(0.28, p.accent)
+  grad.addColorStop(0.48, p.light)
+  grad.addColorStop(0.65, p.mid)
+  grad.addColorStop(0.85, p.pole)
+  grad.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, 256, 16)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
 export default function Destination({
   position,
   name,
@@ -62,78 +190,59 @@ export default function Destination({
   const [nearby, setNearby] = useState(false)
   const [labelMode, setLabelMode] = useState<'on' | 'faded' | 'off'>('on')
 
-  // Planet surface geometry with procedural color bands
-  const planetGeo = useMemo(() => {
-    const geometry = new THREE.IcosahedronGeometry(8, 3)
-    const positions = geometry.getAttribute('position')
-    const colors = new Float32Array(positions.count * 3)
-    const p = palette ?? DEFAULT_PALETTE
-    const abyss = new THREE.Color(p.deep)
-    const cobalt = new THREE.Color(p.mid)
-    const cyan = new THREE.Color(p.light)
-    const teal = new THREE.Color(p.accent)
-    const silver = new THREE.Color(p.pole)
-    const cloudWhite = new THREE.Color('#f2f7ff')
+  const p = palette ?? DEFAULT_PALETTE
 
-    for (let i = 0; i < positions.count; i++) {
-      const x = positions.getX(i) / 8
-      const y = positions.getY(i) / 8
-      const z = positions.getZ(i) / 8
-      const longitude = Math.atan2(z, x)
+  // Procedural illustrated textures
+  const planetTexture = useMemo(() => createCartoonPlanetTexture(p), [p])
+  const ringTexture = useMemo(() => createCartoonRingTexture(p), [p])
 
-      const grain = Math.sin(longitude * 7.3 + y * 11.7) * Math.cos(longitude * 5.1 - y * 8.3)
-      const stripe = Math.sin(y * 9 + Math.sin(longitude * 3) * 0.9)
-      const band = 0.5 + 0.5 * Math.sin(longitude * 2 + y * 4.5)
-      const current = abyss.clone().lerp(cobalt, 0.3 + 0.34 * band + 0.14 * grain + 0.08 * stripe)
+  // Geometries
+  const planetSphereGeo = useMemo(() => new THREE.SphereGeometry(7.8, 48, 48), [])
+  const atmosphereGeo = useMemo(() => new THREE.SphereGeometry(9.6, 32, 32), [])
+  const moonGeo = useMemo(() => new THREE.SphereGeometry(1.6, 16, 16), [])
 
-      const shallow = Math.max(0, Math.sin(longitude * 1.7 - y * 3.4 + grain * 0.6) - 0.3) * 0.6
-      const tealRegion = Math.max(0, Math.cos(longitude * 2.6 + y * 4.1 + grain * 0.4) - 0.7) * 0.55
-      const silverRegion = Math.max(
-        0,
-        Math.sin(longitude * 1.15 + y * 2.6) * Math.cos(longitude * 2.4 - y * 1.7) - 0.58,
-      ) * 1.35
-
-      const polar = Math.max(0, (Math.abs(y) - 0.66) / 0.34)
-      const cloud = Math.max(0, stripe - 0.5) * 0.5 * (1 - Math.abs(y) * 0.5)
-
-      current.lerp(cyan, Math.min(0.8, shallow))
-      current.lerp(teal, tealRegion)
-      current.lerp(silver, Math.min(0.7, silverRegion))
-      current.lerp(silver, Math.min(0.92, polar * (0.7 + 0.3 * stripe)))
-      current.lerp(cloudWhite, cloud)
-
-      colors[i * 3] = current.r
-      colors[i * 3 + 1] = current.g
-      colors[i * 3 + 2] = current.b
+  // Dotted orbital path circle around galaxy center
+  const orbitLine = useMemo(() => {
+    const r = Math.hypot(position[0], position[2])
+    if (r < 15) return null
+    const pts: THREE.Vector3[] = []
+    const segments = 128
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2
+      pts.push(new THREE.Vector3(Math.cos(theta) * r - position[0], 0, Math.sin(theta) * r - position[2]))
     }
-
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    return geometry
-  }, [palette])
-
-  const atmosphereGeo = useMemo(() => new THREE.SphereGeometry(10.5, 32, 32), [])
-  const ringGeo = useMemo(() => new THREE.TorusGeometry(14, 0.2, 8, 64), [])
-  const outerRingGeo = useMemo(() => new THREE.TorusGeometry(17, 0.15, 8, 64), [])
-  const moonGeo = useMemo(() => new THREE.IcosahedronGeometry(1.7, 2), [])
+    const geo = new THREE.BufferGeometry().setFromPoints(pts)
+    const mat = new THREE.LineDashedMaterial({
+      color: accent,
+      dashSize: 5,
+      gapSize: 4,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false,
+    })
+    const line = new THREE.Line(geo, mat)
+    line.computeLineDistances()
+    return line
+  }, [position, accent])
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
     if (planetRef.current) {
-      planetRef.current.rotation.y += 0.05 * delta
+      planetRef.current.rotation.y += 0.06 * delta
     }
     if (ringRef.current) {
-      ringRef.current.rotation.z += 0.15 * delta
+      ringRef.current.rotation.z += 0.08 * delta
     }
     if (moonOrbitRef.current) {
       moonOrbitRef.current.rotation.y += 0.12 * delta
     }
     if (crystalRef.current) {
-      crystalRef.current.rotation.y += 0.4 * delta
+      crystalRef.current.rotation.y += 0.35 * delta
       crystalRef.current.rotation.x = Math.sin(t * 0.8) * 0.15
     }
     if (anomalyRef.current) {
-      anomalyRef.current.rotation.y += 0.3 * delta
-      anomalyRef.current.rotation.z += 0.2 * delta
+      anomalyRef.current.rotation.y += 0.25 * delta
+      anomalyRef.current.rotation.z += 0.18 * delta
     }
 
     const ship = spacecraftRef.current
@@ -151,10 +260,11 @@ export default function Destination({
     setLabelMode((prev) => (prev === mode ? prev : mode))
   })
 
-  const p = palette ?? DEFAULT_PALETTE
-
   return (
     <group position={position} scale={scale}>
+      {/* Delicate cyan dotted orbital path line running through the solar system */}
+      {orbitLine && <primitive object={orbitLine} />}
+
       {/* Subtle distant beacon halo for long-range discovery */}
       <mesh>
         <sphereGeometry args={[22, 16, 16]} />
@@ -174,37 +284,37 @@ export default function Destination({
         /* Star Cluster / Golden Stellar Core for ACHIEVEMENTS */
         <group ref={planetRef}>
           <mesh>
-            <sphereGeometry args={[7.5, 32, 32]} />
+            <sphereGeometry args={[7.8, 32, 32]} />
             <meshStandardMaterial
-              color="#fff4d0"
-              emissive="#ffd700"
-              emissiveIntensity={1.8}
-              roughness={0.2}
+              color="#fffbeb"
+              emissive="#f59e0b"
+              emissiveIntensity={2.0}
+              roughness={0.15}
             />
           </mesh>
           <mesh>
             <sphereGeometry args={[10.5, 32, 32]} />
             <meshBasicMaterial
-              color="#ffcc00"
+              color="#fbbf24"
               transparent
-              opacity={0.25}
+              opacity={0.35}
               side={THREE.BackSide}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
             />
           </mesh>
           <mesh>
-            <sphereGeometry args={[14.5, 32, 32]} />
+            <sphereGeometry args={[15, 32, 32]} />
             <meshBasicMaterial
-              color="#ffaa00"
+              color="#f97316"
               transparent
-              opacity={0.1}
+              opacity={0.15}
               side={THREE.BackSide}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
             />
           </mesh>
-          <pointLight color="#ffe066" intensity={60} distance={70} />
+          <pointLight color="#fde047" intensity={70} distance={80} />
         </group>
       ) : type === 'crystal' ? (
         /* Energy Cluster / Crystalline Body for SKILLS */
@@ -212,16 +322,143 @@ export default function Destination({
           <mesh>
             <octahedronGeometry args={[8, 0]} />
             <meshStandardMaterial
-              color={p.mid}
-              emissive={p.light}
-              emissiveIntensity={0.65}
-              metalness={0.7}
-              roughness={0.2}
+              color={p.light}
+              emissive={p.mid}
+              emissiveIntensity={0.8}
+              metalness={0.4}
+              roughness={0.15}
               flatShading
             />
           </mesh>
           <mesh>
-            <sphereGeometry args={[10, 32, 32]} />
+            <sphereGeometry args={[10.5, 32, 32]} />
+            <meshBasicMaterial
+              color={p.light}
+              transparent
+              opacity={0.28}
+              side={THREE.BackSide}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <mesh ref={ringRef} rotation={[Math.PI / 3, 0, 0]}>
+            <ringGeometry args={[11, 15, 48]} />
+            <meshStandardMaterial
+              color={p.accent}
+              emissive={p.light}
+              emissiveIntensity={0.7}
+              transparent
+              opacity={0.75}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </group>
+      ) : type === 'anomaly' ? (
+        /* Cosmic Anomaly / Pulsating Beacon for CONTACT */
+        <group ref={anomalyRef}>
+          <mesh>
+            <dodecahedronGeometry args={[7.2, 1]} />
+            <meshStandardMaterial
+              color="#06b6d4"
+              emissive="#22d3ee"
+              emissiveIntensity={0.9}
+              roughness={0.25}
+              flatShading
+            />
+          </mesh>
+          <mesh ref={ringRef} rotation={[Math.PI / 4, Math.PI / 6, 0]}>
+            <ringGeometry args={[11, 15, 48]} />
+            <meshStandardMaterial
+              color="#22d3ee"
+              emissive="#06b6d4"
+              emissiveIntensity={0.8}
+              transparent
+              opacity={0.75}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <mesh rotation={[-Math.PI / 3, -Math.PI / 4, 0]}>
+            <ringGeometry args={[13.5, 17.5, 48]} />
+            <meshStandardMaterial
+              color="#c084fc"
+              emissive="#a855f7"
+              emissiveIntensity={0.7}
+              transparent
+              opacity={0.65}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </group>
+      ) : type === 'moon' ? (
+        /* Moon / Atmospheric World for ABOUT */
+        <group ref={planetRef}>
+          <mesh geometry={planetSphereGeo}>
+            <meshStandardMaterial
+              map={planetTexture}
+              roughness={0.45}
+              metalness={0.06}
+              emissive={p.deep}
+              emissiveIntensity={0.25}
+            />
+          </mesh>
+          <mesh geometry={atmosphereGeo}>
+            <meshBasicMaterial
+              color={p.light}
+              transparent
+              opacity={0.22}
+              side={THREE.BackSide}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        </group>
+      ) : type === 'satellite' ? (
+        /* Moon with Orbital Satellite Probe for RESUME */
+        <group ref={planetRef}>
+          <mesh geometry={planetSphereGeo}>
+            <meshStandardMaterial
+              map={planetTexture}
+              roughness={0.45}
+              metalness={0.06}
+              emissive={p.deep}
+              emissiveIntensity={0.25}
+            />
+          </mesh>
+          <mesh geometry={atmosphereGeo}>
+            <meshBasicMaterial
+              color="#38bdf8"
+              transparent
+              opacity={0.22}
+              side={THREE.BackSide}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+          <group ref={moonOrbitRef}>
+            <mesh position={[12, 0, 0]}>
+              <boxGeometry args={[1.5, 0.9, 0.9]} />
+              <meshStandardMaterial color="#fffbeb" emissive="#38bdf8" emissiveIntensity={0.6} metalness={0.6} />
+            </mesh>
+            <mesh position={[12, 0, 0]}>
+              <boxGeometry args={[3.6, 0.08, 0.7]} />
+              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.4} metalness={0.8} />
+            </mesh>
+          </group>
+        </group>
+      ) : (
+        /* Illustrated Cartoon Planet (PROJECTS, BASE, EDUCATION, EXPERIENCE) */
+        <group ref={planetRef}>
+          <mesh geometry={planetSphereGeo}>
+            <meshStandardMaterial
+              map={planetTexture}
+              roughness={0.38}
+              metalness={0.06}
+              emissive={p.deep}
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+          {/* Atmospheric Soft Rim Glow */}
+          <mesh geometry={atmosphereGeo}>
             <meshBasicMaterial
               color={p.light}
               transparent
@@ -231,92 +468,63 @@ export default function Destination({
               depthWrite={false}
             />
           </mesh>
-          <mesh ref={ringRef} geometry={ringGeo} rotation={[Math.PI / 3, 0, 0]}>
-            <meshStandardMaterial color={p.accent} emissive={p.light} emissiveIntensity={0.6} transparent opacity={0.6} />
-          </mesh>
-        </group>
-      ) : type === 'anomaly' ? (
-        /* Cosmic Anomaly / Pulsating Beacon for CONTACT */
-        <group ref={anomalyRef}>
           <mesh>
-            <dodecahedronGeometry args={[7, 1]} />
-            <meshStandardMaterial
-              color="#0e3f4a"
-              emissive="#38bdf8"
-              emissiveIntensity={0.8}
-              roughness={0.3}
-              wireframe={false}
+            <sphereGeometry args={[11, 32, 32]} />
+            <meshBasicMaterial
+              color={accent}
+              transparent
+              opacity={0.06}
+              side={THREE.BackSide}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
             />
-          </mesh>
-          <mesh ref={ringRef} geometry={ringGeo} rotation={[Math.PI / 4, Math.PI / 6, 0]}>
-            <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.8} transparent opacity={0.6} />
-          </mesh>
-          <mesh geometry={outerRingGeo} rotation={[-Math.PI / 3, -Math.PI / 4, 0]}>
-            <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={0.6} transparent opacity={0.4} />
-          </mesh>
-        </group>
-      ) : type === 'moon' ? (
-        /* Moon / Atmospheric World for ABOUT */
-        <group ref={planetRef}>
-          <mesh>
-            <sphereGeometry args={[7.5, 32, 32]} />
-            <meshStandardMaterial color={p.mid} roughness={0.7} metalness={0.1} emissive={p.deep} emissiveIntensity={0.4} />
-          </mesh>
-          <mesh geometry={atmosphereGeo}>
-            <meshBasicMaterial color={p.light} transparent opacity={0.18} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
-        </group>
-      ) : type === 'satellite' ? (
-        /* Moon with Orbital Satellite Probe for RESUME */
-        <group ref={planetRef}>
-          <mesh>
-            <icosahedronGeometry args={[7.2, 2]} />
-            <meshStandardMaterial color={p.mid} roughness={0.85} metalness={0.15} emissive={p.deep} emissiveIntensity={0.3} flatShading />
-          </mesh>
-          <group ref={moonOrbitRef}>
-            <mesh position={[11, 0, 0]}>
-              <boxGeometry args={[1.4, 0.8, 0.8]} />
-              <meshStandardMaterial color="#7dd3fc" emissive="#38bdf8" emissiveIntensity={0.6} metalness={0.8} />
-            </mesh>
-          </group>
-        </group>
-      ) : (
-        /* Standard Planet (PROJECTS, BASE, EDUCATION, EXPERIENCE) */
-        <group ref={planetRef}>
-          <mesh geometry={planetGeo}>
-            <meshStandardMaterial color="#ffffff" vertexColors metalness={0.16} roughness={0.62} emissive="#060a1e" emissiveIntensity={0.35} flatShading />
-          </mesh>
-          <mesh geometry={atmosphereGeo}>
-            <meshBasicMaterial color={p.light} transparent opacity={0.14} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
-          <mesh>
-            <sphereGeometry args={[11.2, 32, 32]} />
-            <meshBasicMaterial color="#a9c2ff" transparent opacity={0.035} side={THREE.BackSide} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
         </group>
       )}
 
-      {/* Lighting */}
-      <pointLight position={[-10, 7, -8]} color="#e6f0ff" intensity={38} distance={54} />
-      <pointLight position={[9, -3, 7]} color="#7fd8ea" intensity={10} distance={34} />
-      {fullLights && <pointLight position={[3, 9, -3]} color="#f0c07a" intensity={7} distance={26} />}
+      {/* Lighting for cartoon form definition */}
+      <pointLight position={[-10, 7, -8]} color="#fffbeb" intensity={42} distance={60} />
+      <pointLight position={[9, -3, 7]} color="#38bdf8" intensity={15} distance={40} />
+      {fullLights && <pointLight position={[3, 9, -3]} color="#fde047" intensity={10} distance={30} />}
 
       {/* Orbiting moons */}
       {moons && type === 'planet' && (
         <group ref={moonOrbitRef} rotation={[0.42, 0, 0.16]}>
-          <mesh geometry={moonGeo} position={[13, 0, 0]}>
-            <meshStandardMaterial color="#cfd7ea" roughness={0.95} metalness={0.04} emissive="#2a3050" emissiveIntensity={0.25} flatShading />
+          <mesh geometry={moonGeo} position={[13.5, 0, 0]}>
+            <meshStandardMaterial
+              color={p.light}
+              roughness={0.5}
+              metalness={0.05}
+              emissive={p.deep}
+              emissiveIntensity={0.25}
+            />
           </mesh>
-          <mesh geometry={moonGeo} position={[-16, 0, 0]} scale={0.62}>
-            <meshStandardMaterial color="#e3c9a8" roughness={0.95} metalness={0.03} emissive="#4a3520" emissiveIntensity={0.2} flatShading />
+          <mesh geometry={moonGeo} position={[-16.5, 0, 0]} scale={0.65}>
+            <meshStandardMaterial
+              color={p.accent}
+              roughness={0.5}
+              metalness={0.05}
+              emissive={p.mid}
+              emissiveIntensity={0.2}
+            />
           </mesh>
         </group>
       )}
 
-      {/* Orbiting rings */}
+      {/* Striped cartoon rings */}
       {ring && type === 'planet' && (
-        <mesh ref={ringRef} geometry={ringGeo} rotation={[Math.PI / 2.5, 0, 0]}>
-          <meshStandardMaterial color="#e8cf96" emissive="#8a6a3c" emissiveIntensity={0.28} metalness={0.5} roughness={0.42} transparent opacity={0.55} />
+        <mesh ref={ringRef} rotation={[Math.PI / 2.6, 0.2, 0]}>
+          <ringGeometry args={[11.5, 18.5, 64]} />
+          <meshStandardMaterial
+            map={ringTexture}
+            roughness={0.4}
+            metalness={0.1}
+            transparent
+            opacity={0.88}
+            side={THREE.DoubleSide}
+            emissive={p.accent}
+            emissiveIntensity={0.25}
+          />
         </mesh>
       )}
 

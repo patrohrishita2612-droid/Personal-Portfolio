@@ -84,13 +84,12 @@ function NebulaCloud({ position, color, color2, size = 200, particleCount = 800,
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
 
     const mat = new THREE.PointsMaterial({
-      // Large + faint: neighbouring sprites overlap into continuous haze instead
-      // of resolving as individual confetti dots at distance
-      size: 46,
+      // Large + soft: neighbouring sprites overlap into continuous haze
+      size: 58,
       map: getSoftDotTexture(),
       vertexColors: true,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.2,
       sizeAttenuation: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
@@ -111,47 +110,45 @@ function NebulaCloud({ position, color, color2, size = 200, particleCount = 800,
 export default function Nebulae() {
   return (
     <group>
-      {/* Clouds live ahead of the start position (+Z is where the camera looks)
-          spread asymmetrically across the visible field */}
-      {/* Indigo drifting into magenta — the anchor cloud */}
-      <NebulaCloud position={[-560, 180, 950]} color="#3b2a8f" color2="#a5407e" size={250} particleCount={1000} rotationSpeed={0.008} />
+      {/* Indigo into vivid magenta — anchor cloud */}
+      <NebulaCloud position={[-560, 180, 950]} color="#4338ca" color2="#d946ef" size={280} particleCount={1100} rotationSpeed={0.008} />
 
-      {/* Violet cloud fading into dusty pink */}
-      <NebulaCloud position={[640, -90, 1150]} color="#5b34a6" color2="#c9748d" size={200} particleCount={800} rotationSpeed={0.012} />
+      {/* Violet cloud drifting into bubblegum pink */}
+      <NebulaCloud position={[640, -90, 1150]} color="#6366f1" color2="#ec4899" size={230} particleCount={900} rotationSpeed={0.012} />
 
-      {/* Teal cloud carrying a muted amber rim */}
-      <NebulaCloud position={[340, 250, 720]} color="#0a5f74" color2="#b3894a" size={180} particleCount={600} rotationSpeed={0.01} />
+      {/* Electric turquoise with golden amber core */}
+      <NebulaCloud position={[340, 250, 720]} color="#06b6d4" color2="#f59e0b" size={200} particleCount={700} rotationSpeed={0.01} />
 
-      {/* Distant dusty-rose cloud easing toward deep violet */}
-      <NebulaCloud position={[-700, -170, 1500]} color="#6d2a63" color2="#4a3f9e" size={220} particleCount={700} rotationSpeed={0.006} />
+      {/* Distant fuchsia easing toward deep violet */}
+      <NebulaCloud position={[-700, -170, 1500]} color="#c026d3" color2="#4f46e5" size={250} particleCount={800} rotationSpeed={0.006} />
 
-      {/* Small cobalt cloud warming to amber */}
-      <NebulaCloud position={[90, -330, 800]} color="#27409e" color2="#c1763f" size={120} particleCount={400} rotationSpeed={0.015} />
+      {/* Cobalt cloud warming to peach */}
+      <NebulaCloud position={[90, -330, 800]} color="#2563eb" color2="#fb923c" size={150} particleCount={500} rotationSpeed={0.015} />
 
-      {/* Wide royal-blue haze drifting behind the galaxy — fills the mid-field with colour */}
-      <NebulaCloud position={[-540, 330, 2600]} color="#2a4bb8" color2="#7a4fd0" size={420} particleCount={1100} rotationSpeed={0.004} />
+      {/* Wide royal-blue haze behind the galaxy */}
+      <NebulaCloud position={[-540, 330, 2600]} color="#3b82f6" color2="#a855f7" size={460} particleCount={1200} rotationSpeed={0.004} />
 
-      {/* Warm amber dust wall off the starboard bow */}
-      <NebulaCloud position={[900, 150, 1800]} color="#8a5a2c" color2="#c98a4a" size={260} particleCount={700} rotationSpeed={0.007} />
+      {/* Warm peach and apricot dust cloud */}
+      <NebulaCloud position={[900, 150, 1800]} color="#ea580c" color2="#fde047" size={290} particleCount={800} rotationSpeed={0.007} />
 
-      {/* High dusty-blue cirrus layer */}
-      <NebulaCloud position={[-280, 470, 620]} color="#4a6cb8" color2="#93a9d8" size={300} particleCount={800} rotationSpeed={0.005} />
+      {/* High cyan-periwinkle layer */}
+      <NebulaCloud position={[-280, 470, 620]} color="#38bdf8" color2="#a78bfa" size={320} particleCount={850} rotationSpeed={0.005} />
 
-      {/* Small subtle-cyan wisp low and to port */}
-      <NebulaCloud position={[-260, -420, 1100]} color="#1c6f86" color2="#6fc6d4" size={150} particleCount={450} rotationSpeed={0.012} />
+      {/* Glowing turquoise wisp */}
+      <NebulaCloud position={[-260, -420, 1100]} color="#06b6d4" color2="#22d3ee" size={170} particleCount={500} rotationSpeed={0.012} />
 
-      {/* Far dusty-pink bloom easing into violet */}
-      <NebulaCloud position={[560, 420, 1600]} color="#b87a94" color2="#6a5fb8" size={240} particleCount={650} rotationSpeed={0.006} />
+      {/* Pastel pink bloom */}
+      <NebulaCloud position={[560, 420, 1600]} color="#f472b6" color2="#818cf8" size={260} particleCount={700} rotationSpeed={0.006} />
 
-      {/* === Behind the launch point — turning around is never an empty void === */}
-      <NebulaCloud position={[780, 140, -980]} color="#27409e" color2="#8a5a2c" size={300} particleCount={800} rotationSpeed={0.005} />
-      <NebulaCloud position={[-700, -240, -1250]} color="#5b34a6" color2="#c9748d" size={260} particleCount={750} rotationSpeed={0.007} />
-      <NebulaCloud position={[140, 520, -1650]} color="#0a5f74" color2="#7a4fd0" size={380} particleCount={950} rotationSpeed={0.004} />
-      <NebulaCloud position={[-360, -480, -760]} color="#6d2a63" color2="#4a6cb8" size={200} particleCount={600} rotationSpeed={0.009} />
+      {/* === Behind launch point === */}
+      <NebulaCloud position={[780, 140, -980]} color="#3b82f6" color2="#f97316" size={320} particleCount={850} rotationSpeed={0.005} />
+      <NebulaCloud position={[-700, -240, -1250]} color="#7c3aed" color2="#f43f5e" size={280} particleCount={800} rotationSpeed={0.007} />
+      <NebulaCloud position={[140, 520, -1650]} color="#0284c7" color2="#a855f7" size={400} particleCount={1000} rotationSpeed={0.004} />
+      <NebulaCloud position={[-360, -480, -760]} color="#c026d3" color2="#38bdf8" size={220} particleCount={650} rotationSpeed={0.009} />
 
-      {/* === Far port/starboard horizons — keeps banking left/right interesting === */}
-      <NebulaCloud position={[1650, -60, 350]} color="#1c6f86" color2="#b3894a" size={340} particleCount={850} rotationSpeed={0.004} />
-      <NebulaCloud position={[-1750, 260, -150]} color="#3b2a8f" color2="#93a9d8" size={320} particleCount={800} rotationSpeed={0.005} />
+      {/* === Horizons === */}
+      <NebulaCloud position={[1650, -60, 350]} color="#06b6d4" color2="#fbbf24" size={360} particleCount={900} rotationSpeed={0.004} />
+      <NebulaCloud position={[-1750, 260, -150]} color="#4f46e5" color2="#38bdf8" size={340} particleCount={850} rotationSpeed={0.005} />
     </group>
   )
 }

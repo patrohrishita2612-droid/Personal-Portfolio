@@ -330,10 +330,10 @@ export default function Spacecraft({ controls, groupRef }: Props) {
       }
 
       // Color cache
-      td.pColor.setHex(0x00ddff)
-      td.pColor2.setHex(0x0088ff)
-      td.pColor3.setHex(0x66eeff)
-      td.pColor4.setHex(0xff44aa)
+      td.pColor.setHex(0x22d3ee)
+      td.pColor2.setHex(0x06b6d4)
+      td.pColor3.setHex(0x67e8f9)
+      td.pColor4.setHex(0xf43f5e)
 
       for (let i = 0; i < td.count; i++) {
         if (td.ages[i] > 0) {
@@ -371,82 +371,98 @@ export default function Spacecraft({ controls, groupRef }: Props) {
   })
 
   return (
-    <group ref={group} position={[0, 0, 0]} scale={0.55}>
-      {/* === Main Fuselage === */}
+    <group ref={group} position={[0, 0, 0]} scale={0.58}>
+      {/* === Main Fuselage (Retro Cream) === */}
       <mesh geometry={fuselageGeo} castShadow>
-        <meshStandardMaterial color="#6a8dc5" metalness={0.8} roughness={0.3} emissive="#1a2a4a" emissiveIntensity={0.15} />
+        <meshStandardMaterial color="#fffbeb" metalness={0.25} roughness={0.38} emissive="#fef3c7" emissiveIntensity={0.15} />
       </mesh>
 
-      {/* === Cockpit Canopy === */}
-      <mesh geometry={canopyGeo} position={[0, 0.55, 1.0]}>
+      {/* === Dorsal Racing Stripe (Tangerine) === */}
+      <mesh position={[0, 0.72, 0.4]} rotation={[0, 0, 0]}>
+        <boxGeometry args={[0.3, 0.08, 4.2]} />
+        <meshStandardMaterial color="#f97316" roughness={0.35} metalness={0.2} emissive="#ea580c" emissiveIntensity={0.2} />
+      </mesh>
+
+      {/* === Cockpit Canopy (Stylized Cyan Glass) === */}
+      <mesh geometry={canopyGeo} position={[0, 0.58, 1.0]}>
         <meshStandardMaterial
-          color="#aaeeff"
-          metalness={0.95}
-          roughness={0.05}
-          emissive="#4466bb"
-          emissiveIntensity={0.6}
+          color="#38bdf8"
+          metalness={0.3}
+          roughness={0.1}
+          emissive="#0284c7"
+          emissiveIntensity={0.5}
           transparent
-          opacity={0.85}
+          opacity={0.88}
         />
       </mesh>
 
-      {/* === Left Wing === */}
+      {/* === Left Wing (Navy with Cyan & Coral) === */}
       <mesh geometry={leftWingGeo} position={[-2.2, 0, -0.3]} rotation={[0, 0, -0.05]}>
-        <meshStandardMaterial color="#4a6a9a" metalness={0.7} roughness={0.35} side={THREE.DoubleSide} emissive="#0a1a3a" emissiveIntensity={0.1} />
+        <meshStandardMaterial color="#1e293b" metalness={0.35} roughness={0.4} side={THREE.DoubleSide} emissive="#0f172a" emissiveIntensity={0.15} />
       </mesh>
-      {/* Wing edge stripe */}
-      <mesh position={[-4.5, 0.02, -0.6]} rotation={[Math.PI / 2, 0, -0.1]}>
-        <boxGeometry args={[0.05, 0.04, 3.8]} />
-        <meshStandardMaterial color="#00ddff" emissive="#00ddff" emissiveIntensity={0.6} />
+      {/* Wing edge cyan neon stripe */}
+      <mesh position={[-4.5, 0.03, -0.6]} rotation={[Math.PI / 2, 0, -0.1]}>
+        <boxGeometry args={[0.08, 0.05, 3.8]} />
+        <meshStandardMaterial color="#06b6d4" emissive="#22d3ee" emissiveIntensity={0.8} />
+      </mesh>
+      {/* Wingtip coral pod */}
+      <mesh position={[-4.4, 0.06, 0.6]}>
+        <boxGeometry args={[0.25, 0.25, 0.9]} />
+        <meshStandardMaterial color="#f97316" emissive="#ea580c" emissiveIntensity={0.3} />
       </mesh>
 
-      {/* === Right Wing === */}
+      {/* === Right Wing (Navy with Cyan & Coral) === */}
       <mesh geometry={rightWingGeo} position={[2.2, 0, -0.3]} rotation={[0, 0, 0.05]}>
-        <meshStandardMaterial color="#4a6a9a" metalness={0.7} roughness={0.35} side={THREE.DoubleSide} emissive="#0a1a3a" emissiveIntensity={0.1} />
+        <meshStandardMaterial color="#1e293b" metalness={0.35} roughness={0.4} side={THREE.DoubleSide} emissive="#0f172a" emissiveIntensity={0.15} />
       </mesh>
-      {/* Wing edge stripe */}
-      <mesh position={[4.5, 0.02, -0.6]} rotation={[Math.PI / 2, 0, 0.1]}>
-        <boxGeometry args={[0.05, 0.04, 3.8]} />
-        <meshStandardMaterial color="#00ddff" emissive="#00ddff" emissiveIntensity={0.6} />
+      {/* Wing edge cyan neon stripe */}
+      <mesh position={[4.5, 0.03, -0.6]} rotation={[Math.PI / 2, 0, 0.1]}>
+        <boxGeometry args={[0.08, 0.05, 3.8]} />
+        <meshStandardMaterial color="#06b6d4" emissive="#22d3ee" emissiveIntensity={0.8} />
+      </mesh>
+      {/* Wingtip coral pod */}
+      <mesh position={[4.4, 0.06, 0.6]}>
+        <boxGeometry args={[0.25, 0.25, 0.9]} />
+        <meshStandardMaterial color="#f97316" emissive="#ea580c" emissiveIntensity={0.3} />
       </mesh>
 
-      {/* === Tail Fin === */}
-      <mesh geometry={tailFinGeo} position={[0, 0.7, -2.2]} rotation={[0, 0, 0]}>
-        <meshStandardMaterial color="#4a6a9a" metalness={0.7} roughness={0.35} side={THREE.DoubleSide} emissive="#0a1a3a" emissiveIntensity={0.1} />
+      {/* === Tail Fin (Coral & Cream) === */}
+      <mesh geometry={tailFinGeo} position={[0, 0.75, -2.2]} rotation={[0, 0, 0]}>
+        <meshStandardMaterial color="#f97316" metalness={0.3} roughness={0.35} side={THREE.DoubleSide} emissive="#ea580c" emissiveIntensity={0.25} />
       </mesh>
 
-      {/* === Engine Housing === */}
+      {/* === Engine Housing (Deep Space Navy) === */}
       <mesh geometry={engineHousingGeo} position={[0, 0, -2.5]}>
-        <meshStandardMaterial color="#3a4a6a" metalness={0.9} roughness={0.2} emissive="#001122" emissiveIntensity={0.1} />
+        <meshStandardMaterial color="#0f172a" metalness={0.6} roughness={0.3} emissive="#020617" emissiveIntensity={0.2} />
       </mesh>
 
-      {/* === Engine Nozzle Ring === */}
+      {/* === Engine Nozzle Ring (Gold/Copper) === */}
       <mesh geometry={nozzleGeo} position={[0, 0, -3.1]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="#1a2a4a" metalness={0.95} roughness={0.15} />
+        <meshStandardMaterial color="#f59e0b" metalness={0.85} roughness={0.2} emissive="#d97706" emissiveIntensity={0.3} />
       </mesh>
 
       {/* === Engine Core Glow === */}
       <mesh ref={engineCore} position={[0, 0, -3.15]} rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.45, 20]} />
-        <meshBasicMaterial color="#00ddff" transparent opacity={0.8} blending={THREE.AdditiveBlending} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.9} blending={THREE.AdditiveBlending} />
       </mesh>
 
       {/* === Engine Outer Glow === */}
       <mesh ref={engineOuter} position={[0, 0, -3.2]} rotation={[Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.65, 20]} />
-        <meshBasicMaterial color="#0088ff" transparent opacity={0.4} blending={THREE.AdditiveBlending} />
+        <circleGeometry args={[0.7, 20]} />
+        <meshBasicMaterial color="#06b6d4" transparent opacity={0.5} blending={THREE.AdditiveBlending} />
       </mesh>
 
       {/* === Engine Trail (cone mesh) === */}
       <mesh ref={engineTrail} position={[0, 0, -5.5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.5, 4, 12, 1, true]} />
-        <meshBasicMaterial color="#00ddff" transparent opacity={0.2} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} />
+        <coneGeometry args={[0.55, 4.5, 12, 1, true]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.25} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
 
       {/* === Boost Trail (larger cone) === */}
       <mesh ref={engineTrailBoost} position={[0, 0, -8]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.7, 8, 12, 1, true]} />
-        <meshBasicMaterial color="#ff44aa" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} />
+        <coneGeometry args={[0.8, 8.5, 12, 1, true]} />
+        <meshBasicMaterial color="#fb7185" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
 
       {/* === Trail Particles === */}

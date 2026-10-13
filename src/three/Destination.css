@@ -39,28 +39,29 @@
 /* Primary Station Name (e.g., PROJECTS, BASE, SKILLS) */
 .destination-label-name {
   display: block;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 3.5px;
+  font-family: var(--font-display, 'Fredoka', 'Outfit', sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
   line-height: 1.15;
-  color: #ffffff;
+  color: #fffbeb;
   text-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.95),
-    0 0 16px var(--label-accent, rgba(70, 224, 232, 0.4));
+    0 2px 10px rgba(0, 0, 0, 0.95),
+    0 0 16px var(--label-accent, rgba(70, 224, 232, 0.5));
   text-transform: uppercase;
 }
 
 /* Secondary Subtitle Line (e.g., MISSION SELECT, COMMAND CENTER) */
 .destination-label-sub {
   display: block;
-  color: var(--label-accent, #7dd3fc);
-  font-family: 'Space Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 10.5px;
+  color: var(--label-accent, #38bdf8);
+  font-family: var(--font-hand, 'Caveat', cursive, sans-serif);
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 2.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  opacity: 0.98;
 }
 
 /* Proximity Prompt Badge: "PRESS ENTER / TAP TO EXPLORE" */
@@ -68,50 +69,50 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px;
-  color: #f8fafc;
-  font-family: 'Space Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 11.5px;
+  padding: 8px 18px;
+  color: #fffbeb;
+  font-family: var(--font-display, 'Fredoka', 'Outfit', sans-serif);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   line-height: 1.2;
   white-space: nowrap;
   background: linear-gradient(
     135deg,
-    rgba(14, 24, 56, 0.88) 0%,
-    rgba(34, 24, 72, 0.82) 100%
+    rgba(14, 24, 56, 0.92) 0%,
+    rgba(22, 19, 58, 0.9) 100%
   );
-  border: 1px solid rgba(125, 211, 252, 0.45);
-  border-radius: 20px;
+  border: 1.5px solid #10b981;
+  border-radius: 24px;
   box-shadow:
-    0 4px 18px rgba(0, 0, 0, 0.5),
-    0 0 14px rgba(99, 102, 241, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 6px 24px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(16, 185, 129, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
-  animation: prompt-pulse 2s ease-in-out infinite alternate;
+  animation: prompt-pulse 1.8s ease-in-out infinite alternate;
   transition: transform 120ms ease, border-color 120ms ease;
 }
 
 .destination-prompt:active {
   transform: scale(0.96);
-  border-color: #ff8b3d;
+  border-color: #34d399;
 }
 
 .destination-prompt .prompt-icon {
-  color: #38bdf8;
-  font-size: 12px;
+  color: #34d399;
+  font-size: 14px;
 }
 
 @keyframes prompt-pulse {
   from {
-    border-color: rgba(125, 211, 252, 0.4);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(99, 102, 241, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(16, 185, 129, 0.25);
   }
   to {
-    border-color: rgba(125, 211, 252, 0.75);
-    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.4);
+    border-color: rgba(52, 211, 153, 0.9);
+    box-shadow: 0 6px 26px rgba(0, 0, 0, 0.6), 0 0 22px rgba(52, 211, 153, 0.5);
   }
 }
 

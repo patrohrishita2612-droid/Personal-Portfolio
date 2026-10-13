@@ -111,11 +111,11 @@ export default function SpaceScene() {
     const context = canvas.getContext('2d')
     if (!context) return null
     const gradient = context.createLinearGradient(0, 0, 0, 512)
-    gradient.addColorStop(0, '#2b1a5e')
-    gradient.addColorStop(0.3, '#182a66')
-    gradient.addColorStop(0.58, '#0d1a44')
-    gradient.addColorStop(0.78, '#2a1c4e')
-    gradient.addColorStop(1, '#3d1f3f')
+    gradient.addColorStop(0, '#23154c')   // deep cosmic violet
+    gradient.addColorStop(0.28, '#141a4a') // deep indigo
+    gradient.addColorStop(0.55, '#070b25') // midnight space navy
+    gradient.addColorStop(0.78, '#18244e') // twilight cyan-blue
+    gradient.addColorStop(1, '#2d1844')   // dusky magenta base
     context.fillStyle = gradient
     context.fillRect(0, 0, 8, 512)
     const texture = new THREE.CanvasTexture(canvas)
@@ -130,8 +130,8 @@ export default function SpaceScene() {
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
       >
-        <color attach="background" args={['#101d4d']} />
-        <fog attach="fog" args={['#101d4d', 200, 1600]} />
+        <color attach="background" args={['#070b25']} />
+        <fog attach="fog" args={['#070b25', 250, 1800]} />
         {skyTexture && (
           <mesh>
             <sphereGeometry args={[5000, 24, 32]} />
@@ -139,10 +139,10 @@ export default function SpaceScene() {
           </mesh>
         )}
 
-        <ambientLight intensity={0.35} color="#5f74c4" />
-        <directionalLight position={[15, 20, 8]} intensity={1.1} color="#d8e6ff" />
-        <directionalLight position={[-20, 5, -15]} intensity={0.6} color="#ffb287" />
-        <pointLight position={[0, -15, 5]} intensity={0.4} color="#ff77b3" distance={50} />
+        <ambientLight intensity={0.55} color="#7b8ed9" />
+        <directionalLight position={[20, 25, 10]} intensity={1.3} color="#fff4e0" />
+        <directionalLight position={[-25, 8, -18]} intensity={0.8} color="#38bdf8" />
+        <pointLight position={[0, -15, 5]} intensity={0.5} color="#e879f9" distance={60} />
 
         <Suspense fallback={null}>
           <Starfield />

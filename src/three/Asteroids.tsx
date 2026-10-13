@@ -53,16 +53,17 @@ export default function Asteroids({ spacecraftRef, onShake }: Props) {
     return g
   }, [])
 
-  // Stone Materials
+  // Cartoon Faceted Stone Materials
   const materials = useMemo(() => {
-    const tones = ['#5e5449', '#4d4842', '#6b5849', '#43464d']
+    const tones = ['#9a6245', '#7c533c', '#a87858', '#4b5563', '#d97706']
     return tones.map(
       (c) =>
         new THREE.MeshStandardMaterial({
           color: new THREE.Color(c),
-          roughness: 0.92,
-          metalness: 0.12,
+          roughness: 0.75,
+          metalness: 0.15,
           flatShading: true,
+          emissive: new THREE.Color(c).multiplyScalar(0.12),
         }),
     )
   }, [])
